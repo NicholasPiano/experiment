@@ -9,46 +9,49 @@ from plot.models import Plot
 
 #util
 import os
+from scipy.misc import imsave, imread, imresize
 
 class Image(models.Model): #single image
   #sub:
 
   #properties
   file_name = models.CharField(default='file_name', max_length=255)
-  experiment = models.ForeignKey(Experiment, related_name='images')
+  input_path = models.CharField(default='input_path', max_length=255)
   series = models.ForeignKey(Series, related_name='images')
   timestep = models.ForeignKey(Timestep, related_name='images')
-  channel = models.IntegerField(default=0)
-  focus = models.IntegerField(default=0)
 
   #methods
-  def input_path(self):
-    root = self.experiment.input_path
-    return os.path.join(root, str(self.series.index), self.file_name)
-
   def load(self):
-    self.array = imread(self.input_path())
+    self.array = imread(os.path.join(self.input_path, self.file_name))
 
   def unload(self):
     del self.array
+
+  def save_array(self):
+    imsave(os.path.join(self.input_path, self.file_name), self.array)
 
   def delete(self, *args, **kwargs):
     #remove file
     os.remove(self.input_path())
     super(Image, self).delete(args, kwargs)
 
-class ModifiedImage(Image): #stores any change to an image that needs to be written to a file, such as plotting
-  #properties
-  image = models.ForeignKey(Image, related_name='modified')
-  description = models.TextField()
+class SourceImage(Image):
+  experiment = models.ForeignKey(Experiment, related_name='images')
+  channel = models.IntegerField(default=0)
+  focus = models.IntegerField(default=0)
 
-  #methods
-
-class CellImage(ModifiedImage): #contextual image of a cell
+class CellImage(Image): #contextual image of a cell
   #sub:
 
   #properties
-  cell_instance = models.ForeignKey(CellInstance, related_name='images')
+  cell_instance = models.ForeignKey(CellInstance, related_name='image')
+
+  #methods
+
+class ModifiedImage(Image): #stores any change to an image that needs to be written to a file, such as plotting
+  #properties
+  image = models.ForeignKey(Image, related_name='modified')
+  description = models.TextField(default='description')
 
   #methods
 
@@ -64,13 +67,15 @@ class BoundingBox(models.Model): #crop to restrict to a context
   #sub:
 
   #properties
-  image = models.OneToOneField(ModifiedImage, related_name='bounding_box')
+  cell = models.OneToOneField(Cell, related_name='bounding_box', default=None)
   x = models.IntegerField(default=0)
   y = models.IntegerField(default=0)
   w = models.IntegerField(default=0)
   h = models.IntegerField(default=0)
 
   #methods
+  def cut(self, array):
+    return array[self.y:self.y+self.h,self.x:self.x+self.w]
 
 class ImageTemplate(models.Model):
   #properties

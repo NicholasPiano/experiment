@@ -14,6 +14,7 @@ class Migration(migrations.Migration):
             name='Cell',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('index', models.IntegerField(default=0)),
             ],
             options={
             },
@@ -23,12 +24,18 @@ class Migration(migrations.Migration):
             name='CellInstance',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('position_x', models.IntegerField()),
-                ('position_y', models.IntegerField()),
-                ('position_z', models.IntegerField()),
-                ('velocity_x', models.IntegerField()),
-                ('velocity_y', models.IntegerField()),
-                ('velocity_z', models.IntegerField()),
+                ('second_region', models.CharField(default=b'', max_length=1)),
+                ('position_x', models.IntegerField(default=0)),
+                ('position_y', models.IntegerField(default=0)),
+                ('position_z', models.IntegerField(default=0)),
+                ('velocity_x', models.IntegerField(default=0)),
+                ('velocity_y', models.IntegerField(default=0)),
+                ('velocity_z', models.IntegerField(default=0)),
+                ('displacement_x', models.IntegerField(default=0)),
+                ('displacement_y', models.IntegerField(default=0)),
+                ('displacement_z', models.IntegerField(default=0)),
+                ('volume', models.IntegerField(default=0)),
+                ('surface_area', models.IntegerField(default=0)),
                 ('cell', models.ForeignKey(related_name=b'cell_instances', to='control.Cell')),
             ],
             options={
@@ -39,9 +46,14 @@ class Migration(migrations.Migration):
             name='Experiment',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('base_path', models.CharField(max_length=255)),
-                ('input_path', models.CharField(max_length=255)),
-                ('output_path', models.CharField(max_length=255)),
+                ('name', models.CharField(default=b'name', max_length=255)),
+                ('base_path', models.CharField(default=b'base_path', max_length=255)),
+                ('input_path', models.CharField(default=b'input_path', max_length=255)),
+                ('output_path', models.CharField(default=b'output_path', max_length=255)),
+                ('x_microns_over_pixels', models.DecimalField(default=0.0, max_digits=6, decimal_places=4)),
+                ('y_microns_over_pixels', models.DecimalField(default=0.0, max_digits=6, decimal_places=4)),
+                ('z_microns_over_pixels', models.DecimalField(default=0.0, max_digits=6, decimal_places=4)),
+                ('time_per_frame', models.DecimalField(default=0.0, max_digits=10, decimal_places=4)),
             ],
             options={
             },
@@ -51,9 +63,10 @@ class Migration(migrations.Migration):
             name='Extension',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('length', models.DecimalField(max_digits=6, decimal_places=4)),
-                ('cell', models.ForeignKey(related_name=b'extensions', to='control.Cell')),
+                ('length', models.DecimalField(default=0.0, max_digits=8, decimal_places=4)),
+                ('angle', models.DecimalField(default=0.0, max_digits=8, decimal_places=4)),
                 ('cell_instance', models.ForeignKey(related_name=b'extensions', to='control.CellInstance')),
+                ('experiment', models.ForeignKey(related_name=b'extensions', to='control.Experiment')),
             ],
             options={
             },
@@ -63,8 +76,9 @@ class Migration(migrations.Migration):
             name='Region',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('index', models.IntegerField()),
-                ('experiment', models.ForeignKey(related_name=b'regions', to='control.Experiment')),
+                ('description', models.TextField(default=b'region')),
+                ('index', models.IntegerField(default=0)),
+                ('experiment', models.ForeignKey(related_name=b'regions', default=None, to='control.Experiment')),
             ],
             options={
             },
@@ -74,7 +88,8 @@ class Migration(migrations.Migration):
             name='Series',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('index', models.IntegerField()),
+                ('index', models.IntegerField(default=0)),
+                ('z0', models.IntegerField(default=0)),
                 ('experiment', models.ForeignKey(related_name=b'series', to='control.Experiment')),
             ],
             options={
@@ -85,7 +100,7 @@ class Migration(migrations.Migration):
             name='Timestep',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('index', models.IntegerField()),
+                ('index', models.IntegerField(default=0)),
                 ('experiment', models.ForeignKey(related_name=b'timesteps', to='control.Experiment')),
                 ('series', models.ForeignKey(related_name=b'timesteps', to='control.Series')),
             ],
@@ -95,14 +110,32 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='cellinstance',
+            name='experiment',
+            field=models.ForeignKey(related_name=b'cell_instances', to='control.Experiment'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='cellinstance',
             name='region',
             field=models.ForeignKey(related_name=b'cell_instances', to='control.Region'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='cellinstance',
+            name='series',
+            field=models.ForeignKey(related_name=b'cell_instances', to='control.Series'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='cellinstance',
             name='timestep',
             field=models.ForeignKey(related_name=b'cell_instances', to='control.Timestep'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='cell',
+            name='experiment',
+            field=models.ForeignKey(related_name=b'cells', to='control.Experiment'),
             preserve_default=True,
         ),
         migrations.AddField(
