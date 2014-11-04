@@ -17,7 +17,7 @@ class Cell(models.Model):
   series = models.ForeignKey(Series, related_name='cells')
 
   #properties
-
+  index = models.IntegerField(default=0)
 
   #methods
 
@@ -263,7 +263,7 @@ class CellInstance(models.Model):
 class BoundingBox(models.Model):
 
   #connections
-  cell = models.OneToOneField(Cell, related_name='bounding_box')
+  cell = models.ForeignKey(Cell, related_name='bounding_box')
 
   #properties
   x = models.IntegerField(default=0)
