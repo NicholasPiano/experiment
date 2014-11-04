@@ -1,3 +1,5 @@
+#apps.image.models
+
 #django
 from django.db import models
 
@@ -6,7 +8,10 @@ from apps.env.models import Experiment, Series, Timestep
 from apps.cell.models import CellInstance
 
 #util
+import os
+import re
 import matplotlib.pyplot as plt
+from scipy.misc import imread, imsave
 
 ### Image
 class Image(models.Model):

@@ -1,3 +1,5 @@
+#apps.cell.models
+
 #django
 from django.db import models
 
@@ -68,6 +70,10 @@ class CellInstance(models.Model):
   def run_calculations(self, ):
     #1. rescale model image to correct the great mistake
     self.mask = self.rescale_model_image()
+
+    #center
+    transform = distance_transform_edt(image)
+    self.cm = np.rint(center_of_mass(transform)).astype(int)
 
     #2. position relative to top left corner of environment
     self.calculate_position()
@@ -161,8 +167,8 @@ class CellInstance(models.Model):
 
     ### X and Y
     #1. rescale coords with bounding box
-    self.position_x = self.cell.bounding_box.x + self.sub_center[0]
-    self.position_y = self.cell.bounding_box.y + self.sub_center[1]
+    self.position_x = self.cell.bounding_box.x + self.cm[0]
+    self.position_y = self.cell.bounding_box.y + self.cm[1]
 
     ### Z
     #mask image set with self.image
@@ -186,7 +192,66 @@ class CellInstance(models.Model):
     self.save()
 
   def calculate_extensions(self):
-    pass
+    '''
+    This is done by finding all points on the edge of the model and measuring their angles and distances from the COM
+
+    '''
+
+    #1. define edgle object
+    class edgel():
+      def __init__(self, index=0, x=0, y=0, d=0, a=0):
+        self.index = index
+        self.x = x
+        self.y = y
+        self.d = d
+        self.a = a
+
+    #2. resources
+    #- image -> self.mask
+    segmented_image = self.mask
+
+    #3. get edge
+    transform = distance_transform_edt(segmented_image)
+    transform[transform==0] = transform.max() #max all zeros equal to max
+    edge = np.argwhere(transform==transform.min()) #edge is the min of the new transform image -> (n, 2) np array
+
+    #4. get distances and angles from COM
+    data = [edgel(i, e[0], e[1], math.sqrt((e[0]-cm[0])**2+(e[1]-cm[1])**2), math.atan2(e[0]-cm[0], e[1]-cm[1])) for (i,e) in enumerate(edge)]
+
+    #5. trace along edge
+    count = 0
+    length = len(data)
+    sorted_data = [data[0]] #index, x, y, length, angle
+
+    while count<length-1:
+      #get current point
+      current_datum = sorted_data[count]
+
+      #look for closest point to current that is not previous or current
+      sorted_distance = sorted(data, key=lambda edg: math.sqrt((edg.x-current_datum.x)**2+(edg.y-current_datum.y)**2))
+      min_list = filter(lambda edg: edg.index not in [d.index for d in sorted_data], sorted_distance)
+
+      #add it to sorted_data
+      sorted_data.append(min_list[0])
+
+      count+=1
+
+    #reposition by the minimum value to ensure all peaks are not on the edge
+    peak_array = np.array([e.d for e in sorted_data])
+    argmin = np.argmin(peak_array)
+    peak_array2 = np.roll(peak_array, -argmin)
+
+    #reposition indices
+    peak_size = np.arange(10,20)
+    peak_indices = np.array(find_peaks_cwt(peak_array2, peak_size)) + argmin
+    peak_indices[peak_indices>length] -= length
+
+    #get values at indices
+    peak_list = [sorted_data[i] for i in peak_indices] #actual list of peaks. Make extension objects from these.
+
+    #6. create extension objects
+    for peak in peak_list:
+      self.extensions.get_or_create(region=self.region, cell=self.cell, length=peak.d, angle=peak.a)
 
   def calculate_volume_and_surface_area(self):
     pass
