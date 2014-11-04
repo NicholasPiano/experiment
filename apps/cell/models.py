@@ -163,7 +163,7 @@ class CellInstance(models.Model):
     bounding_box = self.cell.bounding_box
 
     #-self.cell.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #all focus
-    focus_image_set = self.cell.series.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0):
+    focus_image_set = self.cell.series.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0)
 
     ### X and Y
     #1. rescale coords with bounding box
