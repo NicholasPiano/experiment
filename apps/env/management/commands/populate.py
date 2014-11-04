@@ -25,15 +25,17 @@ class Command(BaseCommand):
       #2. create experiments and create input and segmented images
       all_created = 0
       for e in experiments:
-        experiment, created = Experiment.objects.get_or_create(name=e.name,
-                                                               base_path=e.base_path,
-                                                               input_path=e.input_path,
-                                                               segmented_path=e.segmented_path,
-                                                               x_microns_over_pixels=e.x_microns_over_pixels,
-                                                               y_microns_over_pixels=e.y_microns_over_pixels,
-                                                               z_microns_over_pixels=e.z_microns_over_pixels,
-                                                               time_per_frame=e.time_per_frame)
+        experiment, created = Experiment.objects.get_or_create(name=e.name)
         if created:
+          experiment.base_path=e.base_path
+          experiment.input_path=e.input_path
+          experiment.segmented_path=e.segmented_path
+          experiment.x_microns_over_pixels=e.x_microns_over_pixels
+          experiment.y_microns_over_pixels=e.y_microns_over_pixels
+          experiment.z_microns_over_pixels=e.z_microns_over_pixels
+          experiment.time_per_frame=e.time_per_frame
+          experiment.save()
+
           all_created += 1
 
           for template in templates:
@@ -41,7 +43,12 @@ class Command(BaseCommand):
 
           self.stdout.write('created experiment %s' % experiment.name)
 
+      self.stdout.write('created %d experiments' % all_created)
+
       #3. for each experiment now in the database, get input and segmented
+      for experiment in Experiment.objects.all():
+        experiment.create_cells_from_segmented_directory()
+#         experiment.create_images_from_input_directory()
 
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)

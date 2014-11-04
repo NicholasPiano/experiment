@@ -15,7 +15,7 @@ class Cell():
   def __init__(self, experiment, series, index, bounding_box, region_list):
     self.experiment = experiment
     self.series = series
-    self.index = 0
+    self.index = index
     self.bounding_box = bounding_box
     self.region_list = region_list
 
@@ -85,7 +85,8 @@ cells = [
 
 def access(experiment_name, series_index, cell_index, timestep=None):
   global cells
-  f = filter(lambda x: x.experiment==experiment_name and x.series==series_index and x.index==cell_index, cells)
+  print([experiment_name, int(series_index), int(cell_index)])
+  f = filter(lambda x: (x.experiment==experiment_name and x.series==int(series_index) and x.index==int(cell_index)), cells)
   cell = f[0]
   if timestep is None:
     return cell

@@ -8,6 +8,7 @@ from apps.cell.data import access as cell_data_access
 
 #util
 import os
+import re
 
 ### Region
 class Region(models.Model):
@@ -43,7 +44,6 @@ class Experiment(models.Model):
 
     #2. extract details from each file_name and get or create objects
     for file_name in file_list:
-      print('processing ... ' + file_name)
       match = template.match(file_name)
 
       series, created = self.series.get_or_create(index=match.group('series'))
@@ -51,21 +51,21 @@ class Experiment(models.Model):
       channel = int(match.group('channel'))
       focus = int(match.group('focus'))
 
-      self.images.get_or_create(file_name=file_name, input_path=input_path, series=series, timestep=timestep, channel=channel, focus=focus)
+      image, created = self.images.get_or_create(file_name=file_name, input_path=input_path, series=series, timestep=timestep, channel=channel, focus=focus)
+      print('processing input ... ' + file_name + (' (created)' if created else ''))
 
   def create_cells_from_segmented_directory(self):
     #1. get list of files
-    segmented_path = os.path.join(self.base_path, self.segmented_path)
+    input_path = os.path.join(self.base_path, self.segmented_path)
     file_list = [image_file_name for image_file_name in os.listdir(input_path) if re.search(r'\.ti[f]{1,2}$', image_file_name) is not None]
     template = self.image_templates.get(name='segmented')
 
     #2. extract details from each file_name and get or create objects
     for file_name in file_list:
-      print('processing segmented ... ' + file_name)
       match = template.match(file_name)
 
       #these must exist or be created
-      series, created = self.series.get_or_create(index=match.group('series'))
+      series, created = self.series.get_or_create(index=(int(match.group('series'))-1)) #subtract one from series.
       timestep, created = self.timesteps.get_or_create(series=series, index=match.group('timestep'))
       cell, created = self.cells.get_or_create(series=series, index=match.group('cell_index'))
       bb = cell_data_access(self.name, series.index, cell.index).bounding_box
@@ -84,6 +84,7 @@ class Experiment(models.Model):
           region = Region.objects.get(index=region_index)
           cell_instance, created = self.cell_instances.get_or_create(cell=cell, series=series, region=region, timestep=timestep)
           image, created = cell_instance.image.get_or_create(file_name=file_name, input_path=input_path, series=series, timestep=timestep)
+          print('processing segmented ... ' + file_name + (' (created)' if created else ''))
 
         else:
           print('skipping %s, %d, %d: blank image'%(self.name, series.index, cell.index))
