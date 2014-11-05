@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
       #all cell_instances
-      for cell_instance in CellInstance.objects.filter(pk=1225):
+      for cell_instance in CellInstance.objects.filter(pk__gt=1225):
         self.stdout.write('processing cell instance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
         cell_instance.run_calculations()
 

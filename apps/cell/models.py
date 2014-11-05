@@ -81,24 +81,22 @@ class CellInstance(models.Model):
   #methods
   def run_calculations(self):
     #1. rescale model image to correct the great mistake
-    image = self.image.get()
-
-#     if self.image.get().modified.count()==0: #only run processing if modified images do not already exist
-    self.rescale_model_image()
+    if self.image.get().modified.count()==0: #only run processing if modified images do not already exist
+      self.rescale_model_image()
 
 #     #2. center of mass
 #     self.find_center_of_mass() #this has be done each time you want to use the center of mass
 #     print(self.cm)
 
     #3. position relative to top left corner of environment
-#     self.calculate_position()
+    self.calculate_position()
 
     #4. extension lengths and angles
 #     if self.extensions.count()==0: #there is no way to get previously created extensions uniquely.
-#       self.calculate_extensions()
+      self.calculate_extensions()
 
     #5. volume and surface area
-#     self.calculate_volume_and_surface_area()
+    self.calculate_volume_and_surface_area()
 
   def rescale_model_image(self):
     '''
@@ -123,7 +121,6 @@ class CellInstance(models.Model):
     segmented_image = self.image.get()
     #2. bounding box shape
     segmented_image_shape = self.cell.bounding_box.get().shape()
-    print(segmented_image_shape)
 
     #procedure
     #1. make a black figure the same size as the original image, but without axes or any markings
