@@ -7,7 +7,19 @@ from django.db import models
 from apps.env.models import Region, Experiment, Series, Timestep
 
 #util
-
+import os
+import re
+import scipy
+from scipy.ndimage import distance_transform_edt
+from scipy.misc import imsave, imread, imresize
+from scipy.ndimage.measurements import center_of_mass
+from scipy.signal import find_peaks_cwt
+import numpy as np
+import string
+import random
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import math
 
 ### Cell
 class Cell(models.Model):
@@ -69,20 +81,23 @@ class CellInstance(models.Model):
   #methods
   def run_calculations(self, ):
     #1. rescale model image to correct the great mistake
-    self.mask = self.rescale_model_image()
+    if self.image.get().modified.count()==0: #only run processing if modified images do not already exist
+      self.rescale_model_image()
 
     #center
-    transform = distance_transform_edt(image)
+    segmented_image = self.image.get().modified.get(description='mask')
+    segmented_image.load()
+    transform = distance_transform_edt(segmented_image.array)
     self.cm = np.rint(center_of_mass(transform)).astype(int)
 
     #2. position relative to top left corner of environment
-    self.calculate_position()
+#     self.calculate_position()
 
     #3. extension lengths and angles
     self.calculate_extensions()
 
     #4. volume and surface area
-    self.calculate_volume_and_surface_area()
+#     self.calculate_volume_and_surface_area()
 
   def rescale_model_image(self):
     '''
@@ -106,7 +121,7 @@ class CellInstance(models.Model):
     #1. cell image
     segmented_image = self.image.get()
     #2. bounding box shape
-    segmented_image_shape = self.cell.bounding_box.shape()
+    segmented_image_shape = self.cell.bounding_box.get().shape()
 
     #procedure
     #1. make a black figure the same size as the original image, but without axes or any markings
@@ -141,7 +156,6 @@ class CellInstance(models.Model):
 
     mask_image.array = final_image
     mask_image.save_array()
-    return final_image
 
   def calculate_position(self):
     '''
@@ -157,7 +171,8 @@ class CellInstance(models.Model):
 
     #resources
     #-self.image
-    segmented_image = self.mask
+    segmented_image = self.image.get().modified.get(description='mask')
+    segmented_image.load()
 
     #-self.cell.bounding_box
     bounding_box = self.cell.bounding_box
@@ -208,15 +223,16 @@ class CellInstance(models.Model):
 
     #2. resources
     #- image -> self.mask
-    segmented_image = self.mask
+    segmented_image = self.image.get().modified.get(description='mask')
+    segmented_image.load()
 
     #3. get edge
-    transform = distance_transform_edt(segmented_image)
+    transform = distance_transform_edt(segmented_image.array)
     transform[transform==0] = transform.max() #max all zeros equal to max
     edge = np.argwhere(transform==transform.min()) #edge is the min of the new transform image -> (n, 2) np array
 
     #4. get distances and angles from COM
-    data = [edgel(i, e[0], e[1], math.sqrt((e[0]-cm[0])**2+(e[1]-cm[1])**2), math.atan2(e[0]-cm[0], e[1]-cm[1])) for (i,e) in enumerate(edge)]
+    data = [edgel(i, e[0], e[1], math.sqrt((e[0]-self.cm[0])**2+(e[1]-self.cm[1])**2), math.atan2(e[0]-self.cm[0], e[1]-self.cm[1])) for (i,e) in enumerate(edge)]
 
     #5. trace along edge
     count = 0
@@ -247,6 +263,7 @@ class CellInstance(models.Model):
     peak_indices[peak_indices>length] -= length
 
     #get values at indices
+    print([len(sorted_data), peak_indices])
     peak_list = [sorted_data[i] for i in peak_indices] #actual list of peaks. Make extension objects from these.
 
     #6. create extension objects
@@ -254,7 +271,9 @@ class CellInstance(models.Model):
       self.extensions.get_or_create(region=self.region, cell=self.cell, length=peak.d, angle=peak.a)
 
   def calculate_volume_and_surface_area(self):
-    pass
+    #test method
+    return 42
+    #1.
 
   def calculate_region(self):
     pass

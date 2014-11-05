@@ -9,6 +9,7 @@ from apps.cell.data import access as cell_data_access
 #util
 import os
 import re
+from scipy.misc import imread, imsave
 
 ### Region
 class Region(models.Model):
@@ -87,9 +88,9 @@ class Experiment(models.Model):
           print('processing segmented ... ' + file_name + (' (created)' if created else ''))
 
         else:
-          print('skipping %s, %d, %d: blank image'%(self.name, series.index, cell.index))
+          print('skipping %s, %d, %d: blank image'%(self.name, int(series.index), int(cell.index)))
       else:
-        print('skipping %s, %d, %d: outside range'%(self.name, series.index, cell.index))
+        print('skipping %s, %d, %d: outside range'%(self.name, int(series.index), int(cell.index)))
 
 ### Series
 class Series(models.Model):

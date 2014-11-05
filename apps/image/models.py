@@ -10,8 +10,15 @@ from apps.cell.models import CellInstance
 #util
 import os
 import re
+import scipy
+from scipy.ndimage import distance_transform_edt
+from scipy.misc import imsave, imread, imresize
+import numpy as np
+import string
+import random
 import matplotlib.pyplot as plt
-from scipy.misc import imread, imsave
+import matplotlib.cm as cm
+import math
 
 ### Image
 class Image(models.Model):
@@ -45,7 +52,7 @@ class Image(models.Model):
     plt.axis('off')
 
     root, ext = os.path.splitext(self.file_name)
-    modified_image = self.modified.create(file_name=root+'_'+description+ext, input_path=image.input_path, series=image.series, timestep=image.timestep, description=description)
+    modified_image = self.modified.create(file_name=root+'_'+description+ext, input_path=self.input_path, series=self.series, timestep=self.timestep, description=description)
     plt.savefig(os.path.join(modified_image.input_path, modified_image.file_name))
     plt.close()
 
