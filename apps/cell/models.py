@@ -79,13 +79,16 @@ class CellInstance(models.Model):
     #return a dictionary with paramters in it. These have been rescaled by the experiment factors
 
   #methods
-  def run_calculations(self, ):
+  def run_calculations(self):
     #1. rescale model image to correct the great mistake
+    image = self.image.get()
+
     if self.image.get().modified.count()==0: #only run processing if modified images do not already exist
       self.rescale_model_image()
 
-    #2. center of mass
-    self.find_center_of_mass() #this has be done each time you want to use the center of mass
+#     #2. center of mass
+#     self.find_center_of_mass() #this has be done each time you want to use the center of mass
+#     print(self.cm)
 
     #3. position relative to top left corner of environment
     self.calculate_position()
@@ -96,11 +99,6 @@ class CellInstance(models.Model):
 
     #5. volume and surface area
     self.calculate_volume_and_surface_area()
-
-  def find_center_of_mass(self):
-    segmented_image = self.mask_array()
-    transform = distance_transform_edt(segmented_image.array)
-    self.cm = np.rint(center_of_mass(transform)).astype(int)
 
   def rescale_model_image(self):
     '''
@@ -122,7 +120,7 @@ class CellInstance(models.Model):
 
     #resources
     #1. cell image
-    segmented_image = self.mask_image()
+    segmented_image = self.image.get()
     #2. bounding box shape
     segmented_image_shape = self.cell.bounding_box.get().shape()
 
@@ -180,20 +178,22 @@ class CellInstance(models.Model):
     bounding_box = self.cell.bounding_box
 
     #-self.cell.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #all focus
-    focus_image_set = self.cell.series.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0)
+    focus_image_set = self.cell.series.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #gfp only
 
     ### X and Y
+    self.cm = self.find_center_of_mass()
+
     #1. rescale coords with bounding box
-    self.position_x = self.cell.bounding_box.x + self.cm[0]
-    self.position_y = self.cell.bounding_box.y + self.cm[1]
+    self.position_x = self.cell.bounding_box.get().x + self.cm[0]
+    self.position_y = self.cell.bounding_box.get().y + self.cm[1]
 
     ### Z
     #mask image set with self.image
     #1. loop through z at the correct timestep
-    for focus_image in focus_image_set:
-      focus_image.load()
-      array = self.cell.bounding_box.cut(focus_image.array)
-      masked_array = np.ma.array(array, mask=segmented_image)
+#     for focus_image in focus_image_set:
+#       focus_image.load()
+#       array = self.cell.bounding_box.cut(focus_image.array)
+#       masked_array = np.ma.array(array, mask=segmented_image)
 
     ### Min and Max Z
 #     cropped_z_image = z_image[bb[1]:bb[1]+bb[3],bb[0]:bb[0]+bb[2]]
@@ -207,6 +207,11 @@ class CellInstance(models.Model):
 
     ### Save
     self.save()
+
+  def find_center_of_mass(self):
+    segmented_image = self.mask_image()
+    transform = distance_transform_edt(segmented_image)
+    return np.rint(center_of_mass(transform)).astype(int)
 
   def calculate_extensions(self):
     '''
@@ -233,8 +238,12 @@ class CellInstance(models.Model):
     edge = np.argwhere(transform==transform.min()) #edge is the min of the new transform image -> (n, 2) np array
 
     #4. get distances and angles from COM
+    self.cm = self.find_center_of_mass()
+
+    print(self.cm)
+    e = edge[0]
+    print([e[0]-self.cm[0], e[1]-self.cm[1], e[0], self.cm[0], e[1], self.cm[1]])
     data = [edgel(i, e[0], e[1], math.sqrt((e[0]-self.cm[0])**2+(e[1]-self.cm[1])**2), math.atan2(e[0]-self.cm[0], e[1]-self.cm[1])) for (i,e) in enumerate(edge)]
-    print(len(data))
 
     #5. trace along edge
     count = 0
@@ -265,7 +274,6 @@ class CellInstance(models.Model):
     peak_indices[peak_indices>length] -= length
 
     #get values at indices
-    print([len(sorted_data), peak_indices])
     peak_list = [sorted_data[i if i<length else i-1] for i in peak_indices] #actual list of peaks. Make extension objects from these.
 
     #6. create extension objects
@@ -274,7 +282,7 @@ class CellInstance(models.Model):
 
   def calculate_volume_and_surface_area(self):
     #test method
-    print(42)
+    pass
     #1.
 
   def mask_image(self):
