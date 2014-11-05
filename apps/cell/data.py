@@ -73,7 +73,7 @@ cells = [
   Cell(experiment='260714', series=14, index=3, bounding_box=BoundingBox(x=295,y=189,w=528,h=288), region_list=RegionList(range_dict={0:1, 55:2, 91:3})),
   Cell(experiment='260714', series=14, index=4, bounding_box=BoundingBox(x=362,y=29,w=447,h=293), region_list=RegionList(range_dict={0:1, 83:2, 97:3})),
   Cell(experiment='260714', series=14, index=6, bounding_box=BoundingBox(x=454,y=56,w=343,h=455), region_list=RegionList(range_dict={0:1, 61:0})),
-  Cell(experiment='260714', series=14, index=7, bounding_box=BoundingBox(x=454,y=56,w=343,h=455), region_list=RegionList(range_dict={0:0, 39:1, 69:2, 73:3, 109:4})),
+  Cell(experiment='260714', series=14, index=7, bounding_box=BoundingBox(x=157,y=127,w=358,h=280), region_list=RegionList(range_dict={0:0, 39:1, 69:2, 73:3, 109:4})),
   Cell(experiment='260714', series=15, index=2, bounding_box=BoundingBox(x=495,y=197,w=189,h=241), region_list=RegionList(range_dict={0:0, 39:2})),
   Cell(experiment='260714', series=15, index=4, bounding_box=BoundingBox(x=738,y=24,w=284,h=284), region_list=RegionList(range_dict={0:1, 68:0})),
   Cell(experiment='260714', series=15, index=7, bounding_box=BoundingBox(x=157,y=126,w=358,h=279), region_list=RegionList(range_dict={0:0, 35:4})),
