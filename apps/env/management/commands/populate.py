@@ -47,9 +47,8 @@ class Command(BaseCommand):
 
       #3. for each experiment now in the database, get input and segmented
       for experiment in Experiment.objects.all():
+        experiment.create_images_from_input_directory()
         experiment.create_cells_from_segmented_directory()
-#         experiment.create_images_from_input_directory()
-
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)

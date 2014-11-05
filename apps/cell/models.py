@@ -84,20 +84,23 @@ class CellInstance(models.Model):
     if self.image.get().modified.count()==0: #only run processing if modified images do not already exist
       self.rescale_model_image()
 
-    #center
-    segmented_image = self.image.get().modified.get(description='mask')
-    segmented_image.load()
+    #2. center of mass
+    self.find_center_of_mass() #this has be done each time you want to use the center of mass
+
+    #3. position relative to top left corner of environment
+    self.calculate_position()
+
+    #4. extension lengths and angles
+    if self.extensions.count()==0: #there is no way to get previously created extensions uniquely.
+      self.calculate_extensions()
+
+    #5. volume and surface area
+    self.calculate_volume_and_surface_area()
+
+  def find_center_of_mass(self):
+    segmented_image = self.mask_array()
     transform = distance_transform_edt(segmented_image.array)
     self.cm = np.rint(center_of_mass(transform)).astype(int)
-
-    #2. position relative to top left corner of environment
-#     self.calculate_position()
-
-    #3. extension lengths and angles
-    self.calculate_extensions()
-
-    #4. volume and surface area
-#     self.calculate_volume_and_surface_area()
 
   def rescale_model_image(self):
     '''
@@ -119,7 +122,7 @@ class CellInstance(models.Model):
 
     #resources
     #1. cell image
-    segmented_image = self.image.get()
+    segmented_image = self.mask_image()
     #2. bounding box shape
     segmented_image_shape = self.cell.bounding_box.get().shape()
 
@@ -171,8 +174,7 @@ class CellInstance(models.Model):
 
     #resources
     #-self.image
-    segmented_image = self.image.get().modified.get(description='mask')
-    segmented_image.load()
+    segmented_image = self.mask_image()
 
     #-self.cell.bounding_box
     bounding_box = self.cell.bounding_box
@@ -223,16 +225,16 @@ class CellInstance(models.Model):
 
     #2. resources
     #- image -> self.mask
-    segmented_image = self.image.get().modified.get(description='mask')
-    segmented_image.load()
+    segmented_image = self.mask_image()
 
     #3. get edge
-    transform = distance_transform_edt(segmented_image.array)
+    transform = distance_transform_edt(segmented_image)
     transform[transform==0] = transform.max() #max all zeros equal to max
     edge = np.argwhere(transform==transform.min()) #edge is the min of the new transform image -> (n, 2) np array
 
     #4. get distances and angles from COM
     data = [edgel(i, e[0], e[1], math.sqrt((e[0]-self.cm[0])**2+(e[1]-self.cm[1])**2), math.atan2(e[0]-self.cm[0], e[1]-self.cm[1])) for (i,e) in enumerate(edge)]
+    print(len(data))
 
     #5. trace along edge
     count = 0
@@ -264,19 +266,21 @@ class CellInstance(models.Model):
 
     #get values at indices
     print([len(sorted_data), peak_indices])
-    peak_list = [sorted_data[i] for i in peak_indices] #actual list of peaks. Make extension objects from these.
+    peak_list = [sorted_data[i if i<length else i-1] for i in peak_indices] #actual list of peaks. Make extension objects from these.
 
     #6. create extension objects
     for peak in peak_list:
-      self.extensions.get_or_create(region=self.region, cell=self.cell, length=peak.d, angle=peak.a)
+      self.extensions.create(region=self.region, cell=self.cell, length=peak.d, angle=peak.a)
 
   def calculate_volume_and_surface_area(self):
     #test method
-    return 42
+    print(42)
     #1.
 
-  def calculate_region(self):
-    pass
+  def mask_image(self):
+    segmented_image = self.image.get().modified.get(description='mask')
+    segmented_image.load()
+    return segmented_image.array
 
 ### BoundingBox
 class BoundingBox(models.Model):
