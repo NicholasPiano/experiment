@@ -185,6 +185,8 @@ class CellInstance(models.Model):
     self.position_x = self.cell.bounding_box.get().x + self.cm[0]
     self.position_y = self.cell.bounding_box.get().y + self.cm[1]
 
+    print(focus_image_set.count())
+
     ### Z
     mean_list = []
     for image in focus_image_set.order_by('focus'):
@@ -302,20 +304,24 @@ class CellInstance(models.Model):
     focus_image_set = self.experiment.images.filter(experiment=self.experiment, series=self.series, timestep=self.timestep, channel=0)
 
     #- central image
-    z_image = self.experiment.images.get(experiment=self.experiment, series=self.series, timestep=self.timestep, channel=0, focus=self.position_z)
+#     z_image = self.experiment.images.get(experiment=self.experiment, series=self.series, timestep=self.timestep, channel=0, focus=self.position_z)
 
-    #- central image mean
-    z_image.load()
-    z_image_mean = z_image.array.mean()
 
-    #define boundaries of cell
-    z_min = z_index-10 if z_index-10>=0 else 0
-    z_max = z_index+10 if z_index+10<focus_image_set.count() else focus_image_set.count()-1
 
-    #first loop: cut images and find pixels above mean
-    pixels_list = []
-    masked_images = []
-    for focus_image in focus_image_set.filter(focus__gt=z_min, focus__lt=z_max).order_by('focus'):
+#     #- central image mean
+#     z_image.load()
+#     z_image_mean = z_image.array.mean()
+
+#     #define boundaries of cell
+#     z_min = self.position_z-10 if self.position_z-10>=0 else 0
+#     z_max = self.position_z+10 if self.position_z+10<focus_image_set.count() else focus_image_set.count()-1
+
+#     #first loop: cut images and find pixels above mean
+#     pixels_list = []
+#     masked_images = []
+
+    i = []
+    for focus_image in focus_image_set.order_by('focus'):
       focus_image.load()
 
       #cut to bounding box
@@ -323,31 +329,37 @@ class CellInstance(models.Model):
 
       #apply mask
       masked_image = np.ma.array(cut_image, mask=inverted_mask, fill_value=0)
-      masked_images.append(masked_image)
+      i.append(masked_image.sum())
+#       imsave(os.path.join(self.experiment.base_path, 'mask', focus_image.file_name), masked_image.filled())
 
-      #pixels
-      pixels = (masked_image>z_image_mean).sum()
-      pixels_list.append(pixels)
+    plt.plot(i)
+    plt.show()
 
-    area_list = z_area*(np.array(pixels_list)-np.min(pixels_list))/(np.max(pixels_list)-np.min(pixels_list))
-    self.volume = area_list.sum()
+#       masked_images.append(masked_image)
 
-    #second loop: surface area
-    surface_area = 0
-    for area in area_list:
-      eroded_mask = mask
-      #erode binary mask
-      while eroded_mask.sum()/255.0 > area:
-        eroded_mask = scipy.ndimage.binary_erosion(eroded_mask).astype(eroded_mask.dtype)
+#       #pixels
+#       pixels = (masked_image>z_image_mean).sum()
+#       pixels_list.append(pixels)
 
-      #get edge of mask
-      if eroded_mask.sum()!=0:
-        transform = distance_transform_edt(eroded_mask)
-        transform[transform==0] = transform.max() #max all zeros equal to max
-        edge = np.argwhere(transform==transform.min()) #edge is the min of the new transform image -> (n, 2) np array
-        surface_area += edge.shape[0]
+#     area_list = z_area*(np.array(pixels_list)-np.min(pixels_list))/(np.max(pixels_list)-np.min(pixels_list))
+#     self.volume = area_list.sum()
 
-    self.surface_area = surface_area
+#     #second loop: surface area
+#     surface_area = 0
+#     for area in area_list:
+#       eroded_mask = mask
+#       #erode binary mask
+#       while eroded_mask.sum()/255.0 > area:
+#         eroded_mask = scipy.ndimage.binary_erosion(eroded_mask).astype(eroded_mask.dtype)
+
+#       #get edge of mask
+#       if eroded_mask.sum()!=0:
+#         transform = distance_transform_edt(eroded_mask)
+#         transform[transform==0] = transform.max() #max all zeros equal to max
+#         edge = np.argwhere(transform==transform.min()) #edge is the min of the new transform image -> (n, 2) np array
+#         surface_area += edge.shape[0]
+
+#     self.surface_area = surface_area
 
     #save
     self.save()
