@@ -92,7 +92,7 @@ class CellInstance(models.Model):
     self.calculate_position()
 
     #4. extension lengths and angles
-#     if self.extensions.count()==0: #there is no way to get previously created extensions uniquely.
+    if self.extensions.count()==0: #there is no way to get previously created extensions uniquely.
       self.calculate_extensions()
 
     #5. volume and surface area
@@ -300,8 +300,11 @@ class BoundingBox(models.Model):
   def shape(self):
     return (self.h, self.w) #shape of the numpy array
 
+  def location(self):
+    return (self.y, self.x) #column, row
+
   def all(self):
-    return (self.x, self.y, self.w, self.h)
+    return (self.x, self.y, self.w, self.h) #standard format
 
   def cut(self, array):
     return array[self.y:self.y+self.h,self.x:self.x+self.w]
