@@ -173,10 +173,10 @@ class CellInstance(models.Model):
     segmented_image = self.mask_image()
 
     #-self.cell.bounding_box
-    bounding_box = self.cell.bounding_box
+    bounding_box = self.cell.bounding_box.get()
 
     #-self.cell.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #all focus
-    focus_image_set = self.cell.series.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #gfp only
+    focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #gfp only
 
     ### X and Y
     self.cm = self.find_center_of_mass()
@@ -186,6 +186,21 @@ class CellInstance(models.Model):
     self.position_y = self.cell.bounding_box.get().y + self.cm[1]
 
     ### Z
+    mean_list = []
+    for image in focus_image_set:
+      #load
+      image.load()
+
+      #cut to bounding box
+      cut_image = bounding_box.cut(image.array)
+
+      #apply mask
+      masked_image = np.ma.array(cut_image, mask=segmented_image, fill_value=0)
+
+      mean_list.append(masked_image.mean())
+
+    self.position_z = np.argmax(mean_list)
+
     #mask image set with self.image
     #1. loop through z at the correct timestep
 #     for focus_image in focus_image_set:
