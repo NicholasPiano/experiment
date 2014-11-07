@@ -97,7 +97,7 @@ class Experiment(models.Model):
           #can now create image and cell_instance
           region = Region.objects.get(index=region_index)
           cell_instance, created = self.cell_instances.get_or_create(cell=cell, series=series, region=region, timestep=timestep)
-          image, created = cell_instance.image.get_or_create(file_name=file_name, input_path=self.mask_path, series=series, timestep=timestep)
+          image, created = cell_instance.image.get_or_create(file_name=file_name, input_path=input_path, series=series, timestep=timestep)
           print('processing segmented ... ' + file_name + (' (created)' if created else ''))
 
         else:

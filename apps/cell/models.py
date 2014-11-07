@@ -87,18 +87,32 @@ class CellInstance(models.Model):
   #methods
   def run_calculations(self):
     #1. rescale model image to correct the great mistake
+    rescaled = False
+    print('Image rescaling...'),
     if self.image.get().modified.count()==0: #only run processing if modified images do not already exist
+      rescaled = True
       self.rescale_model_image()
 
+    print('done.' if rescaled else 'image not rescaled.')
+
     #3. position relative to top left corner of environment
+    print('Position...'),
     self.calculate_position()
+    print('done.')
 
     #4. extension lengths and angles
+    ext = False
+    print('Extensions...'),
     if self.extensions.count()==0: #there is no way to get previously created extensions uniquely.
+      ext = True
       self.calculate_extensions()
 
+    print('done.' if ext else 'not calculated.')
+
     #5. volume and surface area
+    print('Volume and surface area...'),
     self.calculate_volume_and_surface_area()
+    print('done.')
 
   def rescale_model_image(self):
     '''
@@ -133,7 +147,7 @@ class CellInstance(models.Model):
     black_mask_image = segmented_image.array_to_plot_to_image(np.zeros(segmented_image_shape), 'black_mask')
     black_mask_image.load()
     black_mask_array = imresize(black_mask_image.array, (480,640)) #rescale to match plot
-    black_mask_image.delete()
+#     black_mask_image.delete()
 
     #2. get edge columns and rows
     bw = np.dot(black_mask_array[...,:3], [0.299, 0.587, 0.144]) #greyscale image. Unnecessary.
@@ -154,7 +168,7 @@ class CellInstance(models.Model):
 
     #4. save as another ModifiedImage
     root, ext = os.path.splitext(segmented_image.file_name)
-    mask_image = segmented_image.modified.create(file_name=root+'_mask'+ext, input_path=self.experiment.mask_path, series=self.series, timestep=self.timestep, description='mask')
+    mask_image = segmented_image.modified.create(file_name=root+'_mask'+ext, input_path=os.path.join(self.experiment.base_path, self.experiment.mask_path), series=self.series, timestep=self.timestep, description='mask')
 
     final_image = imresize(mask_array, segmented_image_shape)
     final_image[final_image>0]=1
@@ -191,8 +205,6 @@ class CellInstance(models.Model):
     #1. rescale coords with bounding box
     self.position_x = self.cell.bounding_box.get().x + self.cm[0]
     self.position_y = self.cell.bounding_box.get().y + self.cm[1]
-
-    print(focus_image_set.count())
 
     ### Z
     mean_list = []

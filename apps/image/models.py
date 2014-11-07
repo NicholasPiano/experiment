@@ -48,11 +48,6 @@ class Image(models.Model):
   def save_array(self):
     imsave(os.path.join(self.input_path, self.file_name), self.array)
 
-  def delete(self, *args, **kwargs):
-    #remove file
-    os.remove(os.path.join(self.input_path, self.file_name))
-    super(Image, self).delete(args, kwargs)
-
   def array_to_plot_to_image(self, array, description):
     plt.imshow(array, cmap=cm.Greys_r)
     plt.axis('off')
