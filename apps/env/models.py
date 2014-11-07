@@ -26,9 +26,12 @@ class Experiment(models.Model):
   name = models.CharField(max_length=255)
 
   #-paths
-  base_path = models.CharField(default='base_path', max_length=255)
-  input_path = models.CharField(default='input_path', max_length=255) #appended to base_path
-  segmented_path = models.CharField(default='segmented_path', max_length=255)
+  base_path = models.CharField(max_length=255)
+  input_path = models.CharField(default=os.path.join('backup','backup'), max_length=255) #appended to base_path
+  segmented_path = models.CharField(default='segmented', max_length=255)
+  mask_path = models.CharField(default='mask', max_length=255)
+  modified_path = models.CharField(default='modified', max_length=255)
+  plot_path = models.CharField(default='plot', max_length=255)
 
   #-scaling
   x_microns_over_pixels = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)

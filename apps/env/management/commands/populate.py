@@ -28,8 +28,6 @@ class Command(BaseCommand):
         experiment, created = Experiment.objects.get_or_create(name=e.name)
         if created:
           experiment.base_path=e.base_path
-          experiment.input_path=e.input_path
-          experiment.segmented_path=e.segmented_path
           experiment.x_microns_over_pixels=e.x_microns_over_pixels
           experiment.y_microns_over_pixels=e.y_microns_over_pixels
           experiment.z_microns_over_pixels=e.z_microns_over_pixels

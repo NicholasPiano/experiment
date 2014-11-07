@@ -17,11 +17,9 @@ class Region():
     self.description = description
 
 class Experiment():
-  def __init__(self, name, base_path, input_path, segmented_path, x_microns_over_pixels, y_microns_over_pixels, z_microns_over_pixels, time_per_frame):
+  def __init__(self, name, base_path, x_microns_over_pixels, y_microns_over_pixels, z_microns_over_pixels, time_per_frame):
     self.name = name
     self.base_path = base_path
-    self.input_path = input_path
-    self.segmented_path = segmented_path
     self.x_microns_over_pixels = x_microns_over_pixels
     self.y_microns_over_pixels = y_microns_over_pixels
     self.z_microns_over_pixels = z_microns_over_pixels
@@ -43,9 +41,9 @@ regions = [
 ]
 
 experiments = [
-  Experiment(name='050714', base_path=os.path.join('/','Volumes','transport','data','confocal','050714'), input_path=os.path.join('backup','backup'), segmented_path='segmented', x_microns_over_pixels=274.89/512.0, y_microns_over_pixels=274.89/512.0, z_microns_over_pixels=143.7/98.0, time_per_frame=600),
-  Experiment(name='190714', base_path=os.path.join('/','Volumes','transport','data','confocal','190714'), input_path=os.path.join('backup','backup'), segmented_path='segmented', x_microns_over_pixels=513.53/1024.0, y_microns_over_pixels=256.51/512.0, z_microns_over_pixels=1.482, time_per_frame=600),
-  Experiment(name='260714', base_path=os.path.join('/','Volumes','transport','data','confocal','260714'), input_path=os.path.join('backup','backup'), segmented_path='segmented', x_microns_over_pixels=0.5701647, y_microns_over_pixels=0.5696074, z_microns_over_pixels=1.482, time_per_frame=600),
+  Experiment(name='050714', base_path=os.path.join('/','Volumes','transport','data','confocal','050714'), x_microns_over_pixels=274.89/512.0, y_microns_over_pixels=274.89/512.0, z_microns_over_pixels=143.7/98.0, time_per_frame=600),
+  Experiment(name='190714', base_path=os.path.join('/','Volumes','transport','data','confocal','190714'), x_microns_over_pixels=513.53/1024.0, y_microns_over_pixels=256.51/512.0, z_microns_over_pixels=1.482, time_per_frame=600),
+  Experiment(name='260714', base_path=os.path.join('/','Volumes','transport','data','confocal','260714'), x_microns_over_pixels=0.5701647, y_microns_over_pixels=0.5696074, z_microns_over_pixels=1.482, time_per_frame=600),
 ]
 
 templates = [
