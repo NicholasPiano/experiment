@@ -39,8 +39,6 @@ class Cell(models.Model):
   def calculate_barrier_crossing_timestep(self):
     pass
 
-
-
 ### CellInstance
 class CellInstance(models.Model):
 
@@ -80,6 +78,7 @@ class CellInstance(models.Model):
 
   #-extensions
   max_extension_length = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
+  max_extension_angle = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
 
   def parameters(self):
     pass
@@ -119,6 +118,10 @@ class CellInstance(models.Model):
 
     '''
 
+    ###CHECK
+    # we will be creating an image named <root>_mask.<ext> from a file named <root>.<ext>.
+    # Check if one already exists in the mask path, and if it does, make a mask image from it.
+
     #resources
     #1. cell image
     segmented_image = self.image.get()
@@ -130,6 +133,7 @@ class CellInstance(models.Model):
     black_mask_image = segmented_image.array_to_plot_to_image(np.zeros(segmented_image_shape), 'black_mask')
     black_mask_image.load()
     black_mask_array = imresize(black_mask_image.array, (480,640)) #rescale to match plot
+    black_mask_image.delete()
 
     #2. get edge columns and rows
     bw = np.dot(black_mask_array[...,:3], [0.299, 0.587, 0.144]) #greyscale image. Unnecessary.
@@ -150,7 +154,7 @@ class CellInstance(models.Model):
 
     #4. save as another ModifiedImage
     root, ext = os.path.splitext(segmented_image.file_name)
-    mask_image = segmented_image.modified.create(file_name=root+'_mask'+ext, input_path=segmented_image.input_path, series=self.series, timestep=self.timestep, description='mask')
+    mask_image = segmented_image.modified.create(file_name=root+'_mask'+ext, input_path=self.experiment.mask_path, series=self.series, timestep=self.timestep, description='mask')
 
     final_image = imresize(mask_array, segmented_image_shape)
     final_image[final_image>0]=1
@@ -205,23 +209,6 @@ class CellInstance(models.Model):
       mean_list.append(masked_image.mean())
 
     self.position_z = np.argmax(mean_list)
-
-    #mask image set with self.image
-    #1. loop through z at the correct timestep
-#     for focus_image in focus_image_set:
-#       focus_image.load()
-#       array = self.cell.bounding_box.cut(focus_image.array)
-#       masked_array = np.ma.array(array, mask=segmented_image)
-
-    ### Min and Max Z
-#     cropped_z_image = z_image[bb[1]:bb[1]+bb[3],bb[0]:bb[0]+bb[2]]
-#     masked_z_image = np.ma.array(cropped_z_image, mask=np.invert(mask))
-#     mean = masked_z_image.mean()
-#     int_list.append(masked_z_image.sum())
-#     masked_z_image -= mean
-#     if masked_z_image.max()==255:
-#       print(z)
-#     mean_difference_list.append(masked_z_image.sum())
 
     ### Save
     self.save()

@@ -54,7 +54,6 @@ class Image(models.Model):
     super(Image, self).delete(args, kwargs)
 
   def array_to_plot_to_image(self, array, description):
-
     plt.imshow(array, cmap=cm.Greys_r)
     plt.axis('off')
 

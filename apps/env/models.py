@@ -79,8 +79,8 @@ class Experiment(models.Model):
       match = template.match(file_name)
 
       #these must exist or be created
-      series, created = self.series.get_or_create(index=(int(match.group('series'))-1)) #subtract one from series.
-      timestep, created = self.timesteps.get_or_create(series=series, index=match.group('timestep'))
+      series = self.series.get(index=(int(match.group('series'))-1)) #subtract one from series.
+      timestep = self.timesteps.get(series=series, index=match.group('timestep'))
       cell, created = self.cells.get_or_create(series=series, index=match.group('cell_index'))
       bb = cell_data_access(self.name, series.index, cell.index).bounding_box
       bounding_box, created = cell.bounding_box.get_or_create(x=bb.x, y=bb.y, w=bb.w, h=bb.h)
@@ -97,7 +97,7 @@ class Experiment(models.Model):
           #can now create image and cell_instance
           region = Region.objects.get(index=region_index)
           cell_instance, created = self.cell_instances.get_or_create(cell=cell, series=series, region=region, timestep=timestep)
-          image, created = cell_instance.image.get_or_create(file_name=file_name, input_path=input_path, series=series, timestep=timestep)
+          image, created = cell_instance.image.get_or_create(file_name=file_name, input_path=self.mask_path, series=series, timestep=timestep)
           print('processing segmented ... ' + file_name + (' (created)' if created else ''))
 
         else:
