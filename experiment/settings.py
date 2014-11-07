@@ -39,6 +39,8 @@ INSTALLED_APPS = (
     'apps.env',
     'apps.image',
     'apps.cell',
+    'apps.life',
+    'apps.plot',
 )
 
 MIDDLEWARE_CLASSES = (

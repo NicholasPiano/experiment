@@ -34,6 +34,13 @@ class Experiment(models.Model):
   x_microns_over_pixels = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
   y_microns_over_pixels = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
   z_microns_over_pixels = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
+
+  def volume_from_voxels(self, voxels): #returns microns cubed
+    return voxels*float(self.x_microns_over_pixels*self.y_microns_over_pixels*self.z_microns_over_pixels)
+
+  def area_from_pixels(self, pixels): #returns microns squared
+    return pixels*float(self.x_microns_over_pixels*self.y_microns_over_pixels)
+
   time_per_frame = models.DecimalField(default=0.0, decimal_places=4, max_digits=10)
 
   #methods

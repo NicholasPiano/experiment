@@ -31,6 +31,13 @@ class Image(models.Model):
   file_name = models.CharField(default='file_name', max_length=255)
   input_path = models.CharField(default='input_path', max_length=255)
 
+  #-image properties
+  pixels = models.IntegerField(default=0)
+  max = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
+  min = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
+  mean = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
+  sum = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
+
   #methods
   def load(self):
     self.array = imread(os.path.join(self.input_path, self.file_name))

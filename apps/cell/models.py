@@ -30,8 +30,15 @@ class Cell(models.Model):
 
   #properties
   index = models.IntegerField(default=0)
+  barrier_crossing_timestep = models.IntegerField(default=0)
 
   #methods
+  def calculation_instance_velocities(self):
+    pass
+
+  def calculate_barrier_crossing_timestep(self):
+    pass
+
 
 
 ### CellInstance
@@ -83,10 +90,6 @@ class CellInstance(models.Model):
     #1. rescale model image to correct the great mistake
     if self.image.get().modified.count()==0: #only run processing if modified images do not already exist
       self.rescale_model_image()
-
-#     #2. center of mass
-#     self.find_center_of_mass() #this has be done each time you want to use the center of mass
-#     print(self.cm)
 
     #3. position relative to top left corner of environment
     self.calculate_position()
