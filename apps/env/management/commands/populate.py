@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 #local
 from apps.env.models import Region, Experiment
+from apps.cell.models import Cell, CellInstance
 from apps.env.data import regions, experiments, templates
 
 #util
@@ -49,10 +50,12 @@ class Command(BaseCommand):
         experiment.create_cells_from_segmented_directory()
 
       #4. run individual cell_instance calculations
-
+      for cell_instance in CellInstance.objects.all():
+        cell_instance.run_calculations()
 
       #5. run combined cell calculations
-
+      for cell in Cell.objects.all():
+        cell.run_calculations()
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)
