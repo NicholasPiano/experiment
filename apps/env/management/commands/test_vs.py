@@ -6,6 +6,7 @@ from apps.cell.models import CellInstance, Cell
 from apps.env.models import Region
 from apps.image.util.life.life import Life
 from apps.image.util.life.rule import *
+from apps.image.util.tools import get_neighbour_array_3D
 
 #util
 import matplotlib.pyplot as plt
@@ -40,35 +41,43 @@ class Command(BaseCommand):
       #- focus image set
       focus_image_queryset = cell_instance.experiment.images.filter(series=cell_instance.series, timestep=cell_instance.timestep, channel=0)
 
-      #convert image set
+      #convert image set and run life for noise reduction
       global_mean = 0
       for focus_image in focus_image_queryset:
         #load and cut
         focus_image.load()
         new_array = bounding_box.cut(focus_image.array)
+
         #mask and fill
         new_array = np.ma.array(new_array, mask=mask, fill_value=0)
         global_mean += new_array.mean()/focus_image_queryset.count()
         new_array = new_array.filled()
+
         focus_image.array = new_array
 
       #run life
+      array_3D = []
       for focus_image in focus_image_queryset:
         focus_image.array[focus_image.array<global_mean] = 0
         focus_image.array[focus_image.array>0] = 1
 
         #life
         life = Life(focus_image.array)
-        life.ruleset = OneCoagulationsTenVote()
-        life.update_range(22)
+        life.ruleset = CoagulationsFillInVote()
+        life.ruleset.timestamps = [2,4,4]
+        life.update_cycle()
 
         focus_image.array = life.array
         focus_image.array[focus_image.array==1] = 255
+        array_3D.append(life.array)
+      array_3D = np.array(array_3D)
+
+      get_neighbour_array_3D(np.array([[1,0,1],[1,1,0],[0,0,1]]))
 
       #print all images to output
-      output_path = os.path.join(cell_instance.experiment.base_path, 'test', 'output')
-      for focus_image in focus_image_queryset:
-        imsave(os.path.join(output_path, focus_image.file_name), focus_image.array)
+#       output_path = os.path.join(cell_instance.experiment.base_path, 'test', 'output')
+#       for focus_image in focus_image_queryset:
+#         imsave(os.path.join(output_path, focus_image.file_name), focus_image.array)
 
 
 

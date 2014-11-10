@@ -13,6 +13,7 @@ class Life(object):
   def __init__(self, array, ruleset=VoteInfinite()):
     self.array = array
     self.ruleset = ruleset
+    self.weights = np.pad()
 
   def update(self, index=1):
     #get rule
@@ -39,6 +40,10 @@ class Life(object):
 
   def update_range(self, runs=1):
     for i in range(runs):
+      self.update(i)
+
+  def update_cycle(self):
+    for i in range(np.sum(self.ruleset.timestamps)):
       self.update(i)
 
 class Composite(object): #contains original images and processed images

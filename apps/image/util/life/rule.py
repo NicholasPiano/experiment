@@ -116,9 +116,13 @@ class L_B_S45678Infinite(_SingleRuleSet):
 	def __init__(self, rule=L_B_S45678):
 		super(L_B_S45678Infinite, self).__init__(rule)
 
-class OneCoagulationsTenVote(_RuleSet):
+class TwoCoagulationsTenVote(_RuleSet):
 	rules = [Coagulations, Vote]
-	timestamps = [1,10]
+	timestamps = [2,10]
+
+class CoagulationsFillInVote(_RuleSet):
+  rules = [Coagulations, FillIn, Vote]
+  timestamps = [2,2,2]
 
 class LiveFreeOrDieInfinite(_RuleSet):
 	def __init__(self, rule=LiveFreeOrDie):
