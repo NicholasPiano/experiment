@@ -48,6 +48,12 @@ class Command(BaseCommand):
         experiment.create_images_from_input_directory()
         experiment.create_cells_from_segmented_directory()
 
+      #4. run individual cell_instance calculations
+
+
+      #5. run combined cell calculations
+
+
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)
 #self.stdout.write("Unterminated line", ending='')

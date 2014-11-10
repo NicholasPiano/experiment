@@ -20,15 +20,14 @@ class Command(BaseCommand):
     help = ''
 
     def handle(self, *args, **options):
-
       #get cell_instance details
-      experiment_name = '050714'
-      series_index = 13
-      cell_index = 1
-      timestep_index = 1
+#       experiment_name = '050714'
+#       series_index = 13
+#       cell_index = 1
+#       timestep_index = 1
 
-      cell_instance = CellInstance.objects.get(experiment__name=experiment_name, series__index=series_index, cell__index=cell_index, timestep__index=timestep_index)
-      cell_instance.calculate_volume_and_surface_area()
+#       cell_instance = CellInstance.objects.get(experiment__name=experiment_name, series__index=series_index, cell__index=cell_index, timestep__index=timestep_index)
+#       cell_instance.calculate_volume_and_surface_area()
 
 #       #run volume and surface area calculations
 #       #1. resources:
