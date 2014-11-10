@@ -5,6 +5,9 @@ from django.db import models
 
 #local
 from apps.env.models import Region, Experiment, Series, Timestep
+from apps.image.util.life.life import Life
+from apps.image.util.life.rule import CoagulationsFillInVote
+from apps.image.util.tools import get_surface_elements
 
 #util
 import os
@@ -294,7 +297,51 @@ class CellInstance(models.Model):
       self.extensions.create(region=self.region, cell=self.cell, length=peak.d, angle=peak.a)
 
   def calculate_volume_and_surface_area(self):
-    pass
+    #1. resources:
+    #- segmented image and mask
+    segmented_image = self.mask_image() #numpy array
+    mask = np.array(np.invert(segmented_image), dtype=bool) #true values are ignored
+
+    #- bounding box
+    bounding_box = self.cell.bounding_box.get()
+
+    #- focus image set
+    focus_image_queryset = self.experiment.images.filter(series=self.series, timestep=self.timestep, channel=0)
+
+    #convert image set and run life for noise reduction
+    global_mean = 0
+    for focus_image in focus_image_queryset:
+      #load and cut
+      focus_image.load()
+      new_array = bounding_box.cut(focus_image.array)
+
+      #mask and fill
+      new_array = np.ma.array(new_array, mask=mask, fill_value=0)
+      global_mean += new_array.mean()/focus_image_queryset.count()
+      new_array = new_array.filled()
+
+      #set
+      focus_image.array = new_array
+
+    #run life
+    array_3D = []
+    for focus_image in focus_image_queryset:
+      focus_image.array[focus_image.array<global_mean] = 0
+      focus_image.array[focus_image.array>0] = 1
+
+      #life
+      life = Life(focus_image.array)
+      life.ruleset = CoagulationsFillInVote()
+      life.ruleset.timestamps = [2,4,4]
+      life.update_cycle()
+
+      focus_image.array = life.array
+      focus_image.array[focus_image.array==1] = 1
+      array_3D.append(life.array)
+    array_3D = np.array(array_3D)
+
+    self.volume = array_3D.sum()
+    self.surface_area = get_surface_elements(array_3D)
 
   def mask_image(self):
     segmented_image = self.image.get().modified.get(description='mask')

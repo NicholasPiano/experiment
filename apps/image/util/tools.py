@@ -6,6 +6,7 @@
 
 #util
 import numpy as np
+from scipy.ndimage.filters import convolve
 
 #methods
 def get_neighbour_array(array): #gets number of non-zero neighbours each cell has.
@@ -18,19 +19,21 @@ def get_neighbour_array(array): #gets number of non-zero neighbours each cell ha
   return N
 
 #need an N dimensional neighbour finder
-def get_neighbour_array_3D(array):
-  N = np.zeros(array.shape)
+def get_surface_elements(array):
+  #weights
+  weights = np.zeros((3,3,3))
+  weights[0,1,1] = 1
+  weights[2,1,1] = 1
+  weights[1,1,1] = 10
+  weights[1,1,0] = 1
+  weights[1,0,1] = 1
+  weights[1,1,2] = 1
+  weights[1,2,1] = 1
 
-  r = [0,1,2]
-  h = [-2,-1,0]
-  ind = zip(r,h)
-
-  for x0,x1 in ind:
-    for y0,y1 in ind:
-      print([x0,x1,y0,y1])
-      print(array[x0:x1,y0:y1])
-#       N += array[x0:x1,y0:y1]
-#   print(N)
+  #convolve
+  c = convolve(array, weights, mode='constant')
+  c[c>10] = 0
+  return c.sum()
 
 def cartesian(arrays, out=None):
     """

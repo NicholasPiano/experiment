@@ -13,7 +13,6 @@ class Life(object):
   def __init__(self, array, ruleset=VoteInfinite()):
     self.array = array
     self.ruleset = ruleset
-    self.weights = np.pad()
 
   def update(self, index=1):
     #get rule
