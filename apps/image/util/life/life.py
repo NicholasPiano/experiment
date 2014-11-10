@@ -20,6 +20,7 @@ class Life(object):
 
     #get neighbours with mask
     N = get_neighbour_array(self.array)
+    print([N.shape, self.array.shape])
 
     #get binary array from rule
     #birth
@@ -36,6 +37,10 @@ class Life(object):
     #set grid
     self.array[...] = 0
     self.array[1:-1,1:-1][birth | survive] = 1 #need a better way of doing this able to support multiple states.
+
+  def update_range(self, runs=1):
+    for i in range(runs):
+      self.update(i)
 
 class Composite(object): #contains original images and processed images
   #the idea behind this is each iteration of a particular process contains information that can be used.
