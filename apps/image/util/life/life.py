@@ -20,7 +20,6 @@ class Life(object):
 
     #get neighbours with mask
     N = get_neighbour_array(self.array)
-    print([N.shape, self.array.shape])
 
     #get binary array from rule
     #birth

@@ -10,7 +10,7 @@ import numpy as np
 #methods
 def get_neighbour_array(array): #gets number of non-zero neighbours each cell has.
   #pad image with zeros
-  array = np.pad(array, 1, mode='constant')
+#   array = np.pad(array, 1, mode='constant')
 
   #get neighbours
   N = (
