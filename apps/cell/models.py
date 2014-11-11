@@ -199,7 +199,7 @@ class CellInstance(models.Model):
     #- focus image set
     focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
 
-    #2. loop:
+    #2. first loop:
     #- load images
     #- cut to bounding box
     #- mask with segmented image
@@ -224,15 +224,21 @@ class CellInstance(models.Model):
     global_mean = np.sum(mean_list)/float(len(mean_list))
     array_3D = np.array(array_3D)
 
-    #3. secondary resources obtained
-    #- mean list -> correct centre of mass
-    #- 3D array -> get centre of mass for position, get pixel counts for volume and surface area
-
-    #4. threshold array and fill in gaps
+    #3. second loop
+    #- threshold
     array_3D_binary = np.zeros(array_3D.shape)
     array_3D_binary[array_3D>global_mean] = 1
-    array_3D_neighbours = get_surface_elements(array_3D_binary)
-    array_3D_binary[array_3D_neighbours>4] = 1 #try to fill in gaps.
+
+    #- run life
+    for i in range(array_3D.shape[0]):
+      array_binary = array_3D_binary[i]
+
+      life = Life(array_binary)
+      life.ruleset = CoagulationsFillInVote()
+      life.ruleset.timestamps = [2,4,4]
+      life.update_cycle()
+
+      array_3D_binary[i] = life.array
 
     #5. mask 3D array
     array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
@@ -240,13 +246,14 @@ class CellInstance(models.Model):
 
     #5. calculate values
     #- position -> centre of mass of 3D array
-    (self.position_x, self.position_y, self.position_z) = tuple(np.rint(center_of_mass(array_3D_masked)).astype(int))
+    (self.position_z, self.position_y, self.position_x) = tuple(np.rint(center_of_mass(array_3D_masked)).astype(int)+bounding_box.location())
 
     #- volume
     self.volume = array_3D_binary.sum()
 
     #- surface area
     array_3D_neighbours = get_surface_elements(array_3D_binary)
+    array_3D_neighbours[array_3D_neighbours>9] = 0
     self.surface_area = array_3D_neighbours.sum()
 
     #save
@@ -337,7 +344,7 @@ class BoundingBox(models.Model):
     return (self.h, self.w) #shape of the numpy array
 
   def location(self):
-    return (self.y, self.x) #column, row
+    return np.array((0, self.y, self.x)) #column, row
 
   def all(self):
     return (self.x, self.y, self.w, self.h) #standard format

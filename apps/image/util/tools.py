@@ -32,7 +32,6 @@ def get_surface_elements(array):
 
   #convolve
   c = convolve(array, weights, mode='constant')
-  c[c>10] = 0
   return c
 
 def cartesian(arrays, out=None):

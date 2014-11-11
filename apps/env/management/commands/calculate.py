@@ -23,7 +23,7 @@ class Command(BaseCommand):
       timestep_index = 1
 
       cell_instance = CellInstance.objects.get(experiment__name=experiment_name, series__index=series_index, cell__index=cell_index, timestep__index=timestep_index)
-      cell_instance.calculate_volume_and_surface_area()
+      cell_instance.position_volume_and_surface_area()
 
       ### ALL
 #       for cell_instance in CellInstance.objects.all():
