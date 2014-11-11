@@ -201,12 +201,13 @@ class CellInstance(models.Model):
     #- focus image set
     focus_image_set = self.experiment.image.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
 
-    #2. first loop:
+    #2. loop:
     #- load images
     #- cut to bounding box
     #- mask with segmented image
     #- get mean list
     mean_list = []
+    array_3D = []
     for focus_image in focus_image_set.order_by('focus'):
       #load
       focus_image.load()
@@ -216,31 +217,19 @@ class CellInstance(models.Model):
       focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
       #mean
       mean_list.append(focus_image.array.mean()) # <<< mean list
+      #3D
+      array_3D.append(focus_image.array)
+      focus_image.unload()
 
     global_mean = np.sum(mean_list)/float(len(mean_list))
 
-    #3. second loop
-    #- global threshold
-    #- run life
-    #- compile 3D array
-    array_3D = []
-    for focus_image in focus_image_set.order_by('focus'):
-      #threshold
-      array = focus_image.array.filled()
-      array[array<global_mean] = 0
-      array[array>0] = 1
-      #life
-      life = Life(array)
-      life.ruleset = CoagulationsFillInVote()
-      life.ruleset.timestamps = [2,4,4]
-      life.update_cycle()
-      #3D
-      array_3D.append(life.array)
-    array_3D = np.array(array_3D) # <<< 3D
-
-    #4. secondary resources obtained
+    #3. secondary resources obtained
     #- mean list -> correct centre of mass
     #- 3D array -> get centre of mass for position, get pixel counts for volume and surface area
+    array_3D_neighbours = get_surface_elements(array_3D)
+
+    #4. threshold array and fill in gaps
+
 
     #5. calculate values
     #- position -> centre of mass of 3D array
@@ -250,7 +239,6 @@ class CellInstance(models.Model):
     self.volume = array_3D.sum()
 
     #- surface area
-    self.surface_area_XY =
 
   def calculate_position(self):
     '''
