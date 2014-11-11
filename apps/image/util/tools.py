@@ -28,12 +28,12 @@ def get_surface_elements(array):
   weights[1,1,0] = 1
   weights[1,0,1] = 1
   weights[1,1,2] = 1
-  weights[1,2,1] = 1
+  weights[1,2,1] = 1 #star shape with 10 in the centre -> only nearest neighbours
 
   #convolve
   c = convolve(array, weights, mode='constant')
   c[c>10] = 0
-  return c.sum()
+  return c
 
 def cartesian(arrays, out=None):
     """

@@ -77,7 +77,9 @@ class CellInstance(models.Model):
 
   #-volume and surface area
   volume = models.IntegerField(default=0)
-  surface_area = models.IntegerField(default=0)
+  surface_area_XY = models.IntegerField(default=0)
+  surface_area_YZ = models.IntegerField(default=0)
+  surface_area_ZX = models.IntegerField(default=0)
 
   #-extensions
   max_extension_length = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
@@ -89,6 +91,10 @@ class CellInstance(models.Model):
 
   #methods
   def run_calculations(self):
+    '''
+    #### STAGE 1: Rescaling
+    This first part must be done to accurately locate the image in the larger environment.
+    '''
     #1. rescale model image to correct the great mistake
     rescaled = False
     print('Image rescaling...'),
@@ -98,12 +104,20 @@ class CellInstance(models.Model):
 
     print('done.' if rescaled else 'image not rescaled.')
 
-    #3. position relative to top left corner of environment
-    print('Position...'),
-    self.calculate_position()
-    print('done.')
+    '''
+    #### STAGE 2: Localisation -> loading focus images
+    With the image rescaled, it now needs to be applied to the stack of focus images. This needs to be done as
+    few times as possible.
 
-    #4. extension lengths and angles
+    '''
+
+    self.position_volume_and_surface_area()
+
+    '''
+    #### STAGE 3: Extensions -> using model only
+    This stage does not require the focus images to be loaded.
+
+    '''
     ext = False
     print('Extensions...'),
     if self.extensions.count()==0: #there is no way to get previously created extensions uniquely.
@@ -111,11 +125,6 @@ class CellInstance(models.Model):
       self.calculate_extensions()
 
     print('done.' if ext else 'not calculated.')
-
-    #5. volume and surface area
-    print('Volume and surface area...'),
-    self.calculate_volume_and_surface_area()
-    print('done.')
 
   def rescale_model_image(self):
     '''
@@ -179,6 +188,69 @@ class CellInstance(models.Model):
 
     mask_image.array = final_image
     mask_image.save_array()
+
+  def position_volume_and_surface_area(self):
+    #1. resources
+    #- segmented image and mask
+    segmented_image = self.mask_image()
+    mask = np.array(np.invert(segmented_image), dtype=bool) #true values are ignored
+
+    #- bounding box
+    bounding_box = self.cell.bounding_box.get()
+
+    #- focus image set
+    focus_image_set = self.experiment.image.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
+
+    #2. first loop:
+    #- load images
+    #- cut to bounding box
+    #- mask with segmented image
+    #- get mean list
+    mean_list = []
+    for focus_image in focus_image_set.order_by('focus'):
+      #load
+      focus_image.load()
+      #cut
+      focus_image.array = bounding_box.cut(focus_image.array)
+      #mask
+      focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
+      #mean
+      mean_list.append(focus_image.array.mean()) # <<< mean list
+
+    global_mean = np.sum(mean_list)/float(len(mean_list))
+
+    #3. second loop
+    #- global threshold
+    #- run life
+    #- compile 3D array
+    array_3D = []
+    for focus_image in focus_image_set.order_by('focus'):
+      #threshold
+      array = focus_image.array.filled()
+      array[array<global_mean] = 0
+      array[array>0] = 1
+      #life
+      life = Life(array)
+      life.ruleset = CoagulationsFillInVote()
+      life.ruleset.timestamps = [2,4,4]
+      life.update_cycle()
+      #3D
+      array_3D.append(life.array)
+    array_3D = np.array(array_3D) # <<< 3D
+
+    #4. secondary resources obtained
+    #- mean list -> correct centre of mass
+    #- 3D array -> get centre of mass for position, get pixel counts for volume and surface area
+
+    #5. calculate values
+    #- position -> centre of mass of 3D array
+    (self.position_x, self.position_y, self.position_z) = tuple(np.rint(center_of_mass(transform)).astype(int))
+
+    #- volume
+    self.volume = array_3D.sum()
+
+    #- surface area
+    self.surface_area_XY =
 
   def calculate_position(self):
     '''
