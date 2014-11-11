@@ -77,9 +77,7 @@ class CellInstance(models.Model):
 
   #-volume and surface area
   volume = models.IntegerField(default=0)
-  surface_area_XY = models.IntegerField(default=0)
-  surface_area_YZ = models.IntegerField(default=0)
-  surface_area_ZX = models.IntegerField(default=0)
+  surface_area = models.IntegerField(default=0)
 
   #-extensions
   max_extension_length = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
@@ -217,81 +215,42 @@ class CellInstance(models.Model):
       focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
       #mean
       mean_list.append(focus_image.array.mean()) # <<< mean list
+      focus_image.mean = focus_image.array.mean()
+      focus_image.save()
       #3D
-      array_3D.append(focus_image.array)
+      array_3D.append(focus_image.array.filled())
       focus_image.unload()
 
     global_mean = np.sum(mean_list)/float(len(mean_list))
+    array_3D = np.array(array_3D)
 
     #3. secondary resources obtained
     #- mean list -> correct centre of mass
     #- 3D array -> get centre of mass for position, get pixel counts for volume and surface area
-    array_3D_neighbours = get_surface_elements(array_3D)
 
     #4. threshold array and fill in gaps
+    array_3D_binary = np.zeros(array_3D.shape)
+    array_3D_binary[array_3D>global_mean] = 1
+    array_3D_neighbours = get_surface_elements(array_3D_binary)
+    array_3D_binary[array_3D_neighbours>4] = 1 #try to fill in gaps.
 
+    #5. mask 3D array
+    array_3D_masked = np.ma.array(array_3D, mask=np.invert(array_3D_binary), fill_value=0)
+    array_3D_masked = array_3D_masked.filled()
 
     #5. calculate values
     #- position -> centre of mass of 3D array
-    (self.position_x, self.position_y, self.position_z) = tuple(np.rint(center_of_mass(transform)).astype(int))
+    (self.position_x, self.position_y, self.position_z) = tuple(np.rint(center_of_mass(array_3D_masked)).astype(int))
 
     #- volume
-    self.volume = array_3D.sum()
+    self.volume = array_3D.sum(array_3D_binary)
 
     #- surface area
+    array_3D_neighbours = get_surface_elements(array_3D_binary)
+    self.surface_area = array_3D_neighbours.sum()
 
-  def calculate_position(self):
-    '''
-    There are two different approaches necessary for x,y and z. x,y is a simple translation. z requires searching through the
-    GFP. This method still needs to be investigated.
-
-    Basically, the idea is that the maximum GFP intensity will occur at the center of the cell. This has been tested briefly,
-    but is not 100% backed up by empirical knowledge of the cell. The GFP binds to the DNA in the cytoplasm, not in the
-    nucleus, so there should be a dip in the GFP in the center of the cell. This is sort of observed, but I would have to test it
-    with more cells. I have only looked at one.
-
-    '''
-
-    #resources
-    #-self.image
-    segmented_image = self.mask_image()
-
-    #-self.cell.bounding_box
-    bounding_box = self.cell.bounding_box.get()
-
-    #-self.cell.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #all focus
-    focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #gfp only
-
-    ### X and Y
-    self.cm = self.find_center_of_mass()
-
-    #1. rescale coords with bounding box
-    self.position_x = self.cell.bounding_box.get().x + self.cm[0]
-    self.position_y = self.cell.bounding_box.get().y + self.cm[1]
-
-    ### Z
-    mean_list = []
-    for image in focus_image_set.order_by('focus'):
-      #load
-      image.load()
-
-      #cut to bounding box
-      cut_image = bounding_box.cut(image.array)
-
-      #apply mask
-      masked_image = np.ma.array(cut_image, mask=segmented_image, fill_value=0)
-
-      mean_list.append(masked_image.mean())
-
-    self.position_z = np.argmax(mean_list)
-
-    ### Save
+    #save
     self.save()
-
-  def find_center_of_mass(self):
-    segmented_image = self.mask_image()
-    transform = distance_transform_edt(segmented_image)
-    return np.rint(center_of_mass(transform)).astype(int)
 
   def calculate_extensions(self):
     '''
@@ -355,58 +314,6 @@ class CellInstance(models.Model):
     #6. create extension objects
     for peak in peak_list:
       self.extensions.create(region=self.region, cell=self.cell, length=peak.d, angle=peak.a)
-
-  def calculate_volume_and_surface_area(self):
-    #1. resources:
-    #- segmented image and mask
-    segmented_image = self.mask_image() #numpy array
-    mask = np.array(np.invert(segmented_image), dtype=bool) #true values are ignored
-
-    #- bounding box
-    bounding_box = self.cell.bounding_box.get()
-
-    #- focus image set
-    focus_image_queryset = self.experiment.images.filter(series=self.series, timestep=self.timestep, channel=0)
-
-    #convert image set and run life for noise reduction
-    global_mean = 0
-    for focus_image in focus_image_queryset:
-      #load and cut
-      focus_image.load()
-      new_array = bounding_box.cut(focus_image.array)
-
-      #mask and fill
-      new_array = np.ma.array(new_array, mask=mask, fill_value=0)
-      global_mean += new_array.mean()/focus_image_queryset.count()
-      new_array = new_array.filled()
-
-      #set
-      focus_image.array = new_array
-
-    #run life
-    array_3D = []
-    for focus_image in focus_image_queryset:
-      focus_image.array[focus_image.array<global_mean] = 0
-      focus_image.array[focus_image.array>0] = 1
-
-      #life
-      life = Life(focus_image.array)
-      life.ruleset = CoagulationsFillInVote()
-      life.ruleset.timestamps = [2,4,4]
-      life.update_cycle()
-
-      focus_image.array = life.array
-      focus_image.array[focus_image.array==1] = 1
-      array_3D.append(life.array)
-    array_3D = np.array(array_3D)
-
-    self.volume = array_3D.sum()
-    self.surface_area = get_surface_elements(array_3D)
-
-  def mask_image(self):
-    segmented_image = self.image.get().modified.get(description='mask')
-    segmented_image.load()
-    return segmented_image.array
 
 ### BoundingBox
 class BoundingBox(models.Model):
