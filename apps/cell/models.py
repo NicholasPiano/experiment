@@ -315,6 +315,11 @@ class CellInstance(models.Model):
     for peak in peak_list:
       self.extensions.create(region=self.region, cell=self.cell, length=peak.d, angle=peak.a)
 
+  def mask_image(self):
+    segmented_image = self.image.get().modified.get(description='mask')
+    segmented_image.load()
+    return segmented_image.array
+
 ### BoundingBox
 class BoundingBox(models.Model):
 
