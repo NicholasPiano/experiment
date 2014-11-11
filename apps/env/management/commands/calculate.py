@@ -15,9 +15,20 @@ class Command(BaseCommand):
     help = ''
 
     def handle(self, *args, **options):
-      for cell_instance in CellInstance.objects.all():
-        self.stdout.write('running calculations for CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
-        cell_instance.run_calculations()
+
+      ### SINGLE
+      experiment_name = '050714'
+      series_index = 13
+      cell_index = 1
+      timestep_index = 1
+
+      cell_instance = CellInstance.objects.get(experiment__name=experiment_name, series__index=series_index, cell__index=cell_index, timestep__index=timestep_index)
+      cell_instance.calculate_volume_and_surface_area()
+
+      ### ALL
+#       for cell_instance in CellInstance.objects.all():
+#         self.stdout.write('running calculations for CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
+#         cell_instance.run_calculations()
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)

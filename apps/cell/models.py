@@ -197,7 +197,7 @@ class CellInstance(models.Model):
     bounding_box = self.cell.bounding_box.get()
 
     #- focus image set
-    focus_image_set = self.experiment.image.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
+    focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
 
     #2. loop:
     #- load images
@@ -210,7 +210,7 @@ class CellInstance(models.Model):
       #load
       focus_image.load()
       #cut
-      focus_image.array = bounding_box.cut(focus_image.array)
+      cut_image = bounding_box.cut(focus_image.array)
       #mask
       focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
       #mean
@@ -235,7 +235,7 @@ class CellInstance(models.Model):
     array_3D_binary[array_3D_neighbours>4] = 1 #try to fill in gaps.
 
     #5. mask 3D array
-    array_3D_masked = np.ma.array(array_3D, mask=np.invert(array_3D_binary), fill_value=0)
+    array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
     array_3D_masked = array_3D_masked.filled()
 
     #5. calculate values
@@ -243,7 +243,7 @@ class CellInstance(models.Model):
     (self.position_x, self.position_y, self.position_z) = tuple(np.rint(center_of_mass(array_3D_masked)).astype(int))
 
     #- volume
-    self.volume = array_3D.sum(array_3D_binary)
+    self.volume = array_3D_binary.sum()
 
     #- surface area
     array_3D_neighbours = get_surface_elements(array_3D_binary)
