@@ -18,13 +18,13 @@ class Command(BaseCommand):
       pass
 
       ### SINGLE
-#       experiment_name = '050714'
-#       series_index = 13
-#       cell_index = 1
-#       timestep_index = 1
+      experiment_name = '050714'
+      series_index = 13
+      cell_index = 1
+      timestep_index = 1
 
-#       cell_instance = CellInstance.objects.get(experiment__name=experiment_name, series__index=series_index, cell__index=cell_index, timestep__index=timestep_index)
-#       cell_instance.rescale_model_image()
+      cell_instance = CellInstance.objects.get(experiment__name=experiment_name, series__index=series_index, cell__index=cell_index, timestep__index=timestep_index)
+      cell_instance.position_volume_and_surface_area()
 
       ### ALL
 #       for cell_instance in CellInstance.objects.all():
