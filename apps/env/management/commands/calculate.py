@@ -32,12 +32,12 @@ class Command(BaseCommand):
 #         cell_instance.run_calculations()
 
       ### SINGLE
-      experiment_name = '050714'
-      series_index = 13
-      cell_index = 1
+#       experiment_name = '050714'
+#       series_index = 13
+#       cell_index = 1
 
-      cell = Cell.objects.get(experiment__name=experiment_name, series__index=series_index, index=cell_index)
-      cell.run_calculations()
+#       cell = Cell.objects.get(experiment__name=experiment_name, series__index=series_index, index=cell_index)
+#       cell.run_calculations()
 
       ### ALL
 #       for cell in Cell.objects.all():

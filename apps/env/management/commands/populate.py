@@ -54,10 +54,12 @@ class Command(BaseCommand):
 
       #4. run individual cell_instance calculations
 #       for cell_instance in CellInstance.objects.all():
+#         self.stdout.write('cell instance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
 #         cell_instance.run_calculations()
 
       #5. run combined cell calculations
       for cell in Cell.objects.all():
+        self.stdout.write('cell %d: %s, %d, %d'%(cell.pk, cell.experiment.name, cell.series.index, cell.index))
         cell.run_calculations()
 
       total_time = dt.now() - start

@@ -54,7 +54,6 @@ class Cell(models.Model):
 
     #2. for each instance, calculate the time difference from the previous instance
     for i, cell_instance in enumerate(cell_instance_set_sorted):
-      print('cell instance %d: %d'%(i, cell_instance.timestep.index))
       if cell_instance.timestep.index!=first_timestep_index:
         #search for next timestep below
         previous_timestep_index = cell_instance.timestep.index-1
