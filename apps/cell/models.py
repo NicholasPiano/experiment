@@ -38,17 +38,23 @@ class Cell(models.Model):
   #methods
   def run_calculations(self):
     # velocity, displacement, crossing time
+    print('calculate instance velocities...'),
     self.calculate_instance_velocities()
+    print('done.')
+    print('calculate barrier crossing timestep...'),
     self.calculate_barrier_crossing_timestep()
+    print('done.')
 
   def calculate_instance_velocities(self):
     #1. resources
-    #- cell_instance set
-    cell_instance_set = self.cell_instances.order_by('timestep')
+    #- cell_instance set -> order by timestep
+    cell_instance_set = self.cell_instances.all()
+    cell_instance_set_sorted = sorted(cell_instance_set, key=lambda x: x.timestep.index)
 
     #2. for each instance, calculate the time difference from the previous instance
-    for cell_instance in cell_instance_set:
-      if cell_instance.timestep.index!=min([cell_instance.timestep.index for cell_instance in cell_instance_set]):
+    for i, cell_instance in enumerate(cell_instance_set_sorted):
+      print('cell instance %d: %d'%(i, cell_instance.timestep.index))
+      if cell_instance.timestep.index!=min([c.timestep.index for c in cell_instance_set]):
         #search for next timestep below
         previous_timestep_index = cell_instance.timestep.index-1
         while cell_instance_set.filter(timestep__index=previous_timestep_index).count()==0:
@@ -62,9 +68,6 @@ class Cell(models.Model):
         difference_x = cell_instance.position_x - previous_cell_instance.position_x
         difference_y = cell_instance.position_y - previous_cell_instance.position_y
         difference_z = cell_instance.position_z - previous_cell_instance.position_z
-#         print(cell_instance.timestep.index)
-#         print([cell_instance.position_x,cell_instance.position_y,cell_instance.position_z])
-#         print([difference_x, difference_y, difference_z])
 
         #velocity
         cell_instance.velocity_x = float(difference_x)/float(time_difference)
@@ -81,8 +84,6 @@ class Cell(models.Model):
       else:
         (cell_instance.velocity_x, cell_instance.velocity_y, cell_instance.velocity_z) = (0,0,0)
         (cell_instance.displacement_x, cell_instance.displacement_y, cell_instance.displacement_z) = (0,0,0)
-
-      print([cell_instance.position_x,cell_instance.position_y,cell_instance.position_z])
 
       #save
       cell_instance.save()
@@ -119,9 +120,9 @@ class CellInstance(models.Model):
   def position(self, factor=1):
     return factor*np.array([self.position_x, self.position_y, self.position_z], dtype=int)
 
-  velocity_x = models.IntegerField(default=0)
-  velocity_y = models.IntegerField(default=0)
-  velocity_z = models.IntegerField(default=0)
+  velocity_x = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
+  velocity_y = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
+  velocity_z = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
 
   def velocity(self, factor=1):
     return factor*np.array([self.velocity_x, self.velocity_y, self.velocity_z], dtype=int)
@@ -389,6 +390,11 @@ class CellInstance(models.Model):
     segmented_image = self.image.get().modified.get(description='mask')
     segmented_image.load()
     return segmented_image.array
+
+  def find_center_of_mass(self):
+    segmented_image = self.mask_image()
+    transform = distance_transform_edt(segmented_image)
+    return np.rint(center_of_mass(transform)).astype(int)
 
 ### BoundingBox
 class BoundingBox(models.Model):

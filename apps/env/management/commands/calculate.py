@@ -15,15 +15,16 @@ class Command(BaseCommand):
     help = ''
 
     def handle(self, *args, **options):
+      pass
 
       ### SINGLE
-      experiment_name = '050714'
-      series_index = 13
-      cell_index = 1
-      timestep_index = 1
+#       experiment_name = '050714'
+#       series_index = 13
+#       cell_index = 1
+#       timestep_index = 1
 
-      cell_instance = CellInstance.objects.get(experiment__name=experiment_name, series__index=series_index, cell__index=cell_index, timestep__index=timestep_index)
-      cell_instance.position_volume_and_surface_area()
+#       cell_instance = CellInstance.objects.get(experiment__name=experiment_name, series__index=series_index, cell__index=cell_index, timestep__index=timestep_index)
+#       cell_instance.rescale_model_image()
 
       ### ALL
 #       for cell_instance in CellInstance.objects.all():
@@ -31,12 +32,12 @@ class Command(BaseCommand):
 #         cell_instance.run_calculations()
 
       ### SINGLE
-#       experiment_name = '050714'
-#       series_index = 13
-#       cell_index = 1
+      experiment_name = '050714'
+      series_index = 13
+      cell_index = 1
 
-#       cell = Cell.objects.get(experiment__name=experiment_name, series__index=series_index, index=cell_index)
-#       cell.run_calculations()
+      cell = Cell.objects.get(experiment__name=experiment_name, series__index=series_index, index=cell_index)
+      cell.run_calculations()
 
       ### ALL
 #       for cell in Cell.objects.all():
