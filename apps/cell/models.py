@@ -386,6 +386,9 @@ class CellInstance(models.Model):
     self.max_extension_length = max_extension.length
     self.max_extension_angle = max_extension.angle
 
+    #save
+    self.save()
+
   def mask_image(self):
     segmented_image = self.image.get().modified.get(description='mask')
     segmented_image.load()
