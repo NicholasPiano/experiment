@@ -50,11 +50,12 @@ class Cell(models.Model):
     #- cell_instance set -> order by timestep
     cell_instance_set = self.cell_instances.all()
     cell_instance_set_sorted = sorted(cell_instance_set, key=lambda x: x.timestep.index)
+    first_timestep_index = min([c.timestep.index for c in cell_instance_set])
 
     #2. for each instance, calculate the time difference from the previous instance
     for i, cell_instance in enumerate(cell_instance_set_sorted):
       print('cell instance %d: %d'%(i, cell_instance.timestep.index))
-      if cell_instance.timestep.index!=min([c.timestep.index for c in cell_instance_set]):
+      if cell_instance.timestep.index!=first_timestep_index:
         #search for next timestep below
         previous_timestep_index = cell_instance.timestep.index-1
         while cell_instance_set.filter(timestep__index=previous_timestep_index).count()==0:
@@ -75,7 +76,7 @@ class Cell(models.Model):
         cell_instance.velocity_z = float(difference_z)/float(time_difference)
 
         #displacement
-        first_cell_instance = cell_instance_set.get(timestep__index=min([cell_instance.timestep.index for cell_instance in cell_instance_set]))
+        first_cell_instance = cell_instance_set.get(timestep__index=first_timestep_index)
 
         cell_instance.displacement_x = cell_instance.position_x - first_cell_instance.position_x
         cell_instance.displacement_y = cell_instance.position_y - first_cell_instance.position_y
@@ -95,7 +96,7 @@ class Cell(models.Model):
 
     #find crossing time -> earliest time when cell is in region 2
     if cell_instance_set.filter(region__index=2).count()!=0:
-      self.barrier_crossing_timestep = min([cell_instance.timestep.index for cell_instance in cell_instance_set.filter(region__index=2)])
+      self.barrier_crossing_timestep = min([c.timestep.index for c in cell_instance_set.filter(region__index=2)])
       self.save()
     else:
       self.barrier_crossing_timestep = -1
