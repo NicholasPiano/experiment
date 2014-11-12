@@ -30,6 +30,19 @@ class Command(BaseCommand):
 #         self.stdout.write('running calculations for CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
 #         cell_instance.run_calculations()
 
+      ### SINGLE
+#       experiment_name = '050714'
+#       series_index = 13
+#       cell_index = 1
+
+#       cell = Cell.objects.get(experiment__name=experiment_name, series__index=series_index, index=cell_index)
+#       cell.run_calculations()
+
+      ### ALL
+#       for cell in Cell.objects.all():
+#         self.stdout.write('processing cell %d: %s, %d'%(cell.index, cell.experiment.name, cell.series.index))
+#         cell.run_calculations()
+
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)
 #self.stdout.write("Unterminated line", ending='')

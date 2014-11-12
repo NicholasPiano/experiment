@@ -36,11 +36,69 @@ class Cell(models.Model):
   barrier_crossing_timestep = models.IntegerField(default=0)
 
   #methods
-  def calculation_instance_velocities(self):
-    pass
+  def run_calculations(self):
+    # velocity, displacement, crossing time
+    self.calculate_instance_velocities()
+    self.calculate_barrier_crossing_timestep()
+
+  def calculate_instance_velocities(self):
+    #1. resources
+    #- cell_instance set
+    cell_instance_set = self.cell_instances.order_by('timestep')
+
+    #2. for each instance, calculate the time difference from the previous instance
+    for cell_instance in cell_instance_set:
+      if cell_instance.timestep.index!=min([cell_instance.timestep.index for cell_instance in cell_instance_set]):
+        #search for next timestep below
+        previous_timestep_index = cell_instance.timestep.index-1
+        while cell_instance_set.filter(timestep__index=previous_timestep_index).count()==0:
+          previous_timestep_index -= 1
+
+        #get cell_instance
+        previous_cell_instance = cell_instance_set.get(timestep__index=previous_timestep_index)
+        time_difference = cell_instance.timestep.index - previous_timestep_index
+
+        #spatial differences
+        difference_x = cell_instance.position_x - previous_cell_instance.position_x
+        difference_y = cell_instance.position_y - previous_cell_instance.position_y
+        difference_z = cell_instance.position_z - previous_cell_instance.position_z
+#         print(cell_instance.timestep.index)
+#         print([cell_instance.position_x,cell_instance.position_y,cell_instance.position_z])
+#         print([difference_x, difference_y, difference_z])
+
+        #velocity
+        cell_instance.velocity_x = float(difference_x)/float(time_difference)
+        cell_instance.velocity_y = float(difference_y)/float(time_difference)
+        cell_instance.velocity_z = float(difference_z)/float(time_difference)
+
+        #displacement
+        first_cell_instance = cell_instance_set.get(timestep__index=min([cell_instance.timestep.index for cell_instance in cell_instance_set]))
+
+        cell_instance.displacement_x = cell_instance.position_x - first_cell_instance.position_x
+        cell_instance.displacement_y = cell_instance.position_y - first_cell_instance.position_y
+        cell_instance.displacement_z = cell_instance.position_z - first_cell_instance.position_z
+
+      else:
+        (cell_instance.velocity_x, cell_instance.velocity_y, cell_instance.velocity_z) = (0,0,0)
+        (cell_instance.displacement_x, cell_instance.displacement_y, cell_instance.displacement_z) = (0,0,0)
+
+      print([cell_instance.position_x,cell_instance.position_y,cell_instance.position_z])
+
+      #save
+      cell_instance.save()
 
   def calculate_barrier_crossing_timestep(self):
-    pass
+    #1. resources
+    #- cell_instance set
+    cell_instance_set = self.cell_instances.order_by('timestep')
+
+    #find crossing time -> earliest time when cell is in region 2
+    if cell_instance_set.filter(region__index=2).count()!=0:
+      self.barrier_crossing_timestep = min([cell_instance.timestep.index for cell_instance in cell_instance_set.filter(region__index=2)])
+      self.save()
+    else:
+      self.barrier_crossing_timestep = -1
+      self.save()
 
 ### CellInstance
 class CellInstance(models.Model):
@@ -321,6 +379,11 @@ class CellInstance(models.Model):
     #6. create extension objects
     for peak in peak_list:
       self.extensions.create(region=self.region, cell=self.cell, length=peak.d, angle=peak.a)
+
+    #7. find max
+    max_extension = max(self.extensions.all(), key=lambda x: x.length)
+    self.max_extension_length = max_extension.length
+    self.max_extension_angle = max_extension.angle
 
   def mask_image(self):
     segmented_image = self.image.get().modified.get(description='mask')
