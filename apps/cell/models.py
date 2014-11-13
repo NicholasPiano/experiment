@@ -265,6 +265,7 @@ class CellInstance(models.Model):
     #- get mean list
     mean_list = []
     array_3D = []
+    print(self.cell.bounding_box.get().all())
     for focus_image in focus_image_set.order_by('focus'):
       #load
       focus_image.load()
@@ -317,6 +318,75 @@ class CellInstance(models.Model):
 
     #save
     self.save()
+
+  def save_image_stages(self): #### FOR TESTING ONLY
+    #1. resources
+    #- segmented image and mask
+    segmented_image = self.mask_image()
+    mask = np.array(np.invert(segmented_image), dtype=bool) #true values are ignored
+
+    #- bounding box
+    bounding_box = self.cell.bounding_box.get()
+
+    #- focus image set
+    focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
+
+    #2. first loop:
+    #- load images
+    #- cut to bounding box
+    #- mask with segmented image
+    #- get mean list
+    mean_list = []
+    array_3D = []
+    for focus_image in focus_image_set.order_by('focus'):
+      #brightfield
+      bf = self.experiment.images.get(series=self.cell.series, timestep=self.timestep, focus=focus_image.focus, channel=1)
+      bf.load()
+      bf_array = bf.array
+
+      imsave(os.path.join(self.experiment.base_path, 'test', 'mask_original', bf.file_name), bf_array)
+
+      #load
+      focus_image.load()
+#       imsave(os.path.join(self.experiment.base_path, 'test', 'uncut', focus_image.file_name), focus_image.array)
+      #cut
+      cut_image = bounding_box.cut(focus_image.array)
+#       imsave(os.path.join(self.experiment.base_path, 'test', 'gfp', focus_image.file_name), cut_image)
+      #mask
+      focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
+      #mean
+      mean_list.append(focus_image.array.mean()) # <<< mean list
+      focus_image.mean = focus_image.array.mean()
+      focus_image.save()
+      #3D
+      array_3D.append(focus_image.array.filled())
+#       imsave(os.path.join(self.experiment.base_path, 'test', 'masked', focus_image.file_name), focus_image.array.filled())
+      focus_image.unload()
+
+    global_mean = np.sum(mean_list)/float(len(mean_list))
+    array_3D = np.array(array_3D)
+
+    #3. second loop
+    #- threshold
+    array_3D_binary = np.zeros(array_3D.shape)
+    array_3D_binary[array_3D>global_mean] = 1
+
+    #- run life
+    for i in range(array_3D.shape[0]):
+      array_binary = array_3D_binary[i]
+#       imsave(os.path.join(self.experiment.base_path, 'test', 'threshold', 'image_%d.tif'%i), array_binary)
+
+      life = Life(array_binary)
+      life.ruleset = CoagulationsFillInVote()
+      life.ruleset.timestamps = [2,4,4]
+      life.update_cycle()
+
+      array_3D_binary[i] = life.array
+#       imsave(os.path.join(self.experiment.base_path, 'test', 'life', 'image_%d.tif'%i), life.array)
+
+    #5. mask 3D array
+    array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
+    array_3D_masked = array_3D_masked.filled()
 
   def calculate_extensions(self):
     '''

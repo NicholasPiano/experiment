@@ -60,7 +60,7 @@ class Experiment(models.Model):
     for file_name in file_list:
       match = template.match(file_name)
 
-      series, created = self.series.get_or_create(index=match.group('series'))
+      series, created = self.series.get_or_create(index=(int(match.group('series'))+1))
       timestep, created = self.timesteps.get_or_create(series=series, index=match.group('timestep'))
       channel = int(match.group('channel'))
       focus = int(match.group('focus'))
@@ -79,7 +79,7 @@ class Experiment(models.Model):
       match = template.match(file_name)
 
       #these must exist or be created
-      series = self.series.get(index=(int(match.group('series'))-1)) #subtract one from series.
+      series = self.series.get(index=match.group('series')) #subtract one from series.
       timestep = self.timesteps.get(series=series, index=match.group('timestep'))
       cell, created = self.cells.get_or_create(series=series, index=match.group('cell_index'))
       bb = cell_data_access(self.name, series.index, cell.index).bounding_box
