@@ -344,23 +344,26 @@ class CellInstance(models.Model):
       bf.load()
       bf_array = bf.array
 
-      imsave(os.path.join(self.experiment.base_path, 'test', 'mask_original', bf.file_name), bf_array)
+      imsave(os.path.join(self.experiment.base_path, 'test', 'bf', bf.file_name), bf_array)
 
       #load
       focus_image.load()
-#       imsave(os.path.join(self.experiment.base_path, 'test', 'uncut', focus_image.file_name), focus_image.array)
+      imsave(os.path.join(self.experiment.base_path, 'test', 'gfp', focus_image.file_name), focus_image.array)
       #cut
       cut_image = bounding_box.cut(focus_image.array)
-#       imsave(os.path.join(self.experiment.base_path, 'test', 'gfp', focus_image.file_name), cut_image)
+      imsave(os.path.join(self.experiment.base_path, 'test', 'gfp_cut', focus_image.file_name), cut_image)
+      imsave(os.path.join(self.experiment.base_path, 'test', 'bf_cut', bf.file_name), bounding_box.cut(bf_array))
       #mask
       focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
+      bf_array_masked = np.ma.array(bounding_box.cut(bf_array), mask=mask, fill_value=0)
       #mean
       mean_list.append(focus_image.array.mean()) # <<< mean list
       focus_image.mean = focus_image.array.mean()
       focus_image.save()
       #3D
       array_3D.append(focus_image.array.filled())
-#       imsave(os.path.join(self.experiment.base_path, 'test', 'masked', focus_image.file_name), focus_image.array.filled())
+      imsave(os.path.join(self.experiment.base_path, 'test', 'gfp_masked', focus_image.file_name), focus_image.array.filled())
+      imsave(os.path.join(self.experiment.base_path, 'test', 'bf_masked', bf.file_name), bf_array_masked.filled())
       focus_image.unload()
 
     global_mean = np.sum(mean_list)/float(len(mean_list))
