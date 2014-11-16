@@ -62,28 +62,7 @@ class SourceImage(Image):
 class CellImage(Image):
 
   #connections
-  cell_instance = models.ForeignKey(CellInstance, related_name='image')
-
-  #methods
-  def array_to_plot_to_image(self, array, description):
-    plt.imshow(array, cmap=cm.Greys_r)
-    plt.axis('off')
-
-    root, ext = os.path.splitext(self.file_name)
-    modified_image = self.modified.create(file_name=root+'_'+description+ext, input_path=os.path.join(self.cell_instance.experiment.base_path, 'black'), series=self.series, timestep=self.timestep, description=description)
-    plt.savefig(os.path.join(modified_image.input_path, modified_image.file_name))
-    plt.close()
-
-    return modified_image
-
-### ModifiedImage
-class ModifiedImage(Image):
-
-  #connections
-  image = models.ForeignKey(Image, related_name='modified')
-
-  #properties
-  description = models.TextField(default='description')
+  cell_instance = models.OneToOneField(CellInstance, related_name='image')
 
 ### ImageTemplate
 class ImageTemplate(models.Model):
