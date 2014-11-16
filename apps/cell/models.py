@@ -5,7 +5,6 @@ from django.db import models
 
 #local
 from apps.env.models import Region, Experiment, Series, Timestep
-from apps.image.models import Image
 from apps.image.util.life.life import Life
 from apps.image.util.life.rule import CoagulationsFillInVote
 from apps.image.util.tools import get_surface_elements
@@ -180,7 +179,7 @@ class CellInstance(models.Model):
     mask = np.array(np.invert(self.mask_array()), dtype=bool)
 
     #- bounding box
-    bounding_box = self.cell.bounding_box
+    bounding_box = self.cell.bounding_box.get()
 
     #- focus image set
     focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
@@ -315,19 +314,15 @@ class CellInstance(models.Model):
     self.save()
 
   def mask_array(self):
-    if self.image.array is None:
-      self.image.load()
-    return self.image.array
-
-  def create_image(self, file_name=None, input_path=None, series=None, timestep=None):
-    self.image = CellImage(file_name=file_name, input_path=input_path, series=series, timestep=timestep)
-    self.save()
+    image = self.image.get()
+    image.load()
+    return image.array
 
 ### BoundingBox
 class BoundingBox(models.Model):
 
   #connections
-  cell = models.OneToOneField(Cell, related_name='bounding_box')
+  cell = models.ForeignKey(Cell, related_name='bounding_box')
 
   #properties
   x = models.IntegerField(default=0)
@@ -359,9 +354,3 @@ class Extension(models.Model):
   #properties
   length = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
   angle = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
-
-### CellImage
-class CellImage(Image):
-
-  #connections
-  cell_instance = models.OneToOneField(CellInstance, related_name='image')
