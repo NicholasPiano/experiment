@@ -49,7 +49,7 @@ class Command(BaseCommand):
 
       #3. for each experiment now in the database, get input and segmented
       for experiment in Experiment.objects.all():
-        experiment.create_cells_from_segmented_directory()
+        experiment.create_cells_from_mask_directory()
         experiment.create_images_from_input_directory()
 
       #4. run individual cell_instance calculations

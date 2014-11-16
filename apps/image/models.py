@@ -5,7 +5,6 @@ from django.db import models
 
 #local
 from apps.env.models import Experiment, Series, Timestep
-from apps.cell.models import CellInstance
 
 #util
 import os
@@ -57,12 +56,6 @@ class SourceImage(Image):
   #properties
   channel = models.IntegerField(default=0)
   focus = models.IntegerField(default=0)
-
-### CellImage
-class CellImage(Image):
-
-  #connections
-  cell_instance = models.OneToOneField(CellInstance, related_name='image')
 
 ### ImageTemplate
 class ImageTemplate(models.Model):

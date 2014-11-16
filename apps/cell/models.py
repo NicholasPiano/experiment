@@ -5,6 +5,7 @@ from django.db import models
 
 #local
 from apps.env.models import Region, Experiment, Series, Timestep
+from apps.image.models import Image
 from apps.image.util.life.life import Life
 from apps.image.util.life.rule import CoagulationsFillInVote
 from apps.image.util.tools import get_surface_elements
@@ -100,6 +101,10 @@ class Cell(models.Model):
     else:
       self.barrier_crossing_timestep = -1
       self.save()
+
+  def create_bounding_box(self, x=0, y=0, w=0, h=0):
+    self.bounding_box = BoundingBox(x=x, y=y, w=w, h=h)
+    self.save()
 
 ### CellInstance
 class CellInstance(models.Model):
@@ -314,6 +319,10 @@ class CellInstance(models.Model):
       self.image.load()
     return self.image.array
 
+  def create_image(self, file_name=None, input_path=None, series=None, timestep=None):
+    self.image = CellImage(file_name=file_name, input_path=input_path, series=series, timestep=timestep)
+    self.save()
+
 ### BoundingBox
 class BoundingBox(models.Model):
 
@@ -350,3 +359,9 @@ class Extension(models.Model):
   #properties
   length = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
   angle = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
+
+### CellImage
+class CellImage(Image):
+
+  #connections
+  cell_instance = models.OneToOneField(CellInstance, related_name='image')
