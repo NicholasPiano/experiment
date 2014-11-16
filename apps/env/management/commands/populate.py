@@ -48,7 +48,7 @@ class Command(BaseCommand):
       self.stdout.write('created %d experiments' % all_created)
 
       #3. for each experiment now in the database, get input and segmented
-      for experiment in Experiment.objects.all():
+      for experiment in Experiment.objects.filter(name='190714'):
         experiment.create_cells_from_mask_directory()
         experiment.create_images_from_input_directory()
 
