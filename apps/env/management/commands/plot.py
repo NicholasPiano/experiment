@@ -39,8 +39,9 @@ class Command(BaseCommand):
 
 #       #data
 #       colors = ['blue', 'red', 'green', 'yellow']
-#       for i,plot in enumerate(plots):
-#         ax.plot(plot[0], plot[1], 'o', c=colors[i], alpha=0.5, label='region %d'%(i+1))
+# #       for i,plot in enumerate(plots):
+#       ax.plot(plots[1][0], plots[1][1], 'o', c=colors[1], alpha=0.5, label='region %d'%(1+1))
+#       ax.plot(plots[1][0], plots[1][1], 'o', c=colors[1], alpha=0.5, label='region %d'%(1+1))
 
 #       #lines
 #       x = np.linspace(10**5, 10**6, 1000000)
@@ -48,6 +49,8 @@ class Command(BaseCommand):
 #       ax.plot(x, y0, label='y=x')
 #       y1 = x**1.5
 #       ax.plot(x, y1, label='y=x^1.5')
+#       y2 = x**0.8
+#       ax.plot(x, y2, label='y=x^0.8')
 
 #       ax.set_yscale('log')
 #       ax.set_xscale('log')
@@ -105,30 +108,30 @@ class Command(BaseCommand):
 
       '''
 
-#       plots = [] #list of tuples
-#       colors = ['blue', 'red', 'green', 'yellow'] #regions
+      plots = [] #list of tuples
+      colors = ['blue', 'red', 'green', 'yellow'] #regions
 
-#       for cell in Cell.objects.filter(barrier_crossing_timestep__gt=-1):
-#         x_barrier = cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x
-#         for cell_instance in cell.cell_instances.all():
-#           plots.append((x_barrier-cell_instance.position_x, np.linalg.norm(cell_instance.velocity()), colors[cell_instance.region.index-1]))
+      for cell in Cell.objects.filter(barrier_crossing_timestep__gt=-1):
+        x_barrier = cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x
+        for cell_instance in cell.cell_instances.all():
+          plots.append((x_barrier-cell_instance.position_x, np.linalg.norm(cell_instance.velocity()), colors[cell_instance.region.index-1]))
 
-#       fig = plt.figure()
-#       ax = plt.gca()
+      fig = plt.figure()
+      ax = plt.gca()
 
-#       color_switch = {'blue':True, 'red':True, 'green':True, 'yellow':True}
-#       for plot in plots:
-#         if color_switch[plot[2]]:
-#           ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5, label='region %d'%(colors.index(plot[2])+1))
-#           color_switch[plot[2]] = False
-#         else:
-#           ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5)
+      color_switch = {'blue':True, 'red':True, 'green':True, 'yellow':True}
+      for plot in plots:
+        if color_switch[plot[2]]:
+          ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5, label='region %d'%(colors.index(plot[2])+1))
+          color_switch[plot[2]] = False
+        else:
+          ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5)
 
-#       plt.legend()
-#       plt.title('speed approaching barrier')
-#       plt.ylabel('speed (pixels/timestep)')
-#       plt.xlabel('x distance from barrier (pixels)')
-#       plt.show()
+      plt.legend()
+      plt.title('speed approaching barrier')
+      plt.ylabel('speed (pixels/timestep)')
+      plt.xlabel('x distance from barrier (pixels)')
+      plt.show()
 
       '''
       ### PLOT 4
@@ -191,30 +194,92 @@ class Command(BaseCommand):
 
       '''
 
-      plots = [] #list of tuples
-      colors = ['blue', 'red', 'green', 'yellow'] #regions
+#       plots = [] #list of tuples
+#       colors = ['blue', 'red', 'green', 'yellow'] #regions
 
-      for cell in Cell.objects.filter(barrier_crossing_timestep__gt=-1):
-        x_barrier = cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x
-        for cell_instance in cell.cell_instances.all():
-          plots.append((x_barrier-cell_instance.position_x, cell_instance.position_z, colors[cell_instance.region.index-1]))
+#       for cell in Cell.objects.filter(barrier_crossing_timestep__gt=-1):
+#         x_barrier = cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x
+#         for cell_instance in cell.cell_instances.all():
+#           plots.append((x_barrier-cell_instance.position_x, cell_instance.position_y, colors[cell_instance.region.index-1]))
 
-      fig = plt.figure()
-      ax = plt.gca()
+#       fig = plt.figure()
+#       ax = plt.gca()
 
-      color_switch = {'blue':True, 'red':True, 'green':True, 'yellow':True}
-      for plot in plots:
-        if color_switch[plot[2]]:
-          ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5, label='region %d'%(colors.index(plot[2])+1))
-          color_switch[plot[2]] = False
-        else:
-          ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5)
+#       color_switch = {'blue':True, 'red':True, 'green':True, 'yellow':True}
+#       for plot in plots:
+#         if color_switch[plot[2]]:
+#           ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5, label='region %d'%(colors.index(plot[2])+1))
+#           color_switch[plot[2]] = False
+#         else:
+#           ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5)
 
-      plt.legend()
-      plt.title('z position approaching barrier')
-      plt.ylabel('z position (pixels)')
-      plt.xlabel('x distance from barrier (pixels)')
-      plt.show()
+#       plt.legend()
+#       plt.title('z position approaching barrier')
+#       plt.ylabel('z position (pixels)')
+#       plt.xlabel('x distance from barrier (pixels)')
+#       plt.show()
+
+#       fig = plt.figure()
+#       ax = plt.gca()
+
+#       plots = []
+#       for cell in sorted(Cell.objects.all(), key=lambda x: x.cell_instances.count())[:-10]:
+#         plot = ([],[])
+#         for cell_instance in cell.cell_instances.all():
+#           plot[0].append(cell_instance.position_x)
+#           plot[1].append(cell_instance.position_y)
+#         plots.append(plot)
+
+#       for plot in plots:
+#         ax.plot(plot[0], plot[1], '-')
+
+#       plt.show()
+
+
+      '''
+      ### PLOT 6
+
+      Description: scatter plot of extension length against extension angle towards barrier -> by region
+      X:
+      Y:
+      Resources:
+      Method:
+
+      '''
+
+
+#       plots = [] #list of tuples
+#       colors = ['blue', 'red', 'green', 'yellow'] #regions
+
+#       for cell in Cell.objects.all():
+#         for cell_instance in cell.cell_instances.all():
+# #           for extension in cell_instance.extensions.all():
+#           plots.append((float(cell_instance.max_extension_length), float(cell_instance.extensions.count())-1.57, colors[cell_instance.region.index-1]))
+
+#       fig = plt.figure()
+#       ax = plt.gca()
+
+#       color_switch = {'blue':True, 'red':True, 'green':True, 'yellow':True}
+#       for plot in plots:
+#         if color_switch[plot[2]]:
+#           ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5, label='region %d'%(colors.index(plot[2])+1))
+#           color_switch[plot[2]] = False
+#         else:
+#           ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5)
+
+#       plt.legend()
+#       plt.show()
+
+      '''
+      ### PLOT 7
+
+      Description: scatter plot of z position by region
+      X: region
+      Y: boxplot of velocity
+      Resources: cell list
+      Method:
+
+      '''
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)
