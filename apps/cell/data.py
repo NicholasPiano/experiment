@@ -83,7 +83,7 @@ cells = [
 
 def access(experiment_name, series_index, cell_index, timestep=None):
   global cells
-  print([experiment_name, int(series_index), int(cell_index)])
+#  print([experiment_name, int(series_index), int(cell_index)])
   f = filter(lambda x: (x.experiment==experiment_name and x.series==int(series_index) and x.index==int(cell_index)), cells)
   cell = f[0]
   if timestep is None:
