@@ -28,9 +28,7 @@ class Experiment(models.Model):
   #-paths
   base_path = models.CharField(max_length=255)
   input_path = models.CharField(default=os.path.join('backup','backup'), max_length=255) #appended to base_path
-  segmented_path = models.CharField(default='segmented', max_length=255)
   mask_path = models.CharField(default='mask', max_length=255)
-  modified_path = models.CharField(default='modified', max_length=255)
   plot_path = models.CharField(default='plot', max_length=255)
 
   #-scaling
@@ -50,7 +48,12 @@ class Experiment(models.Model):
     return pixels_per_timestep*float(1.0/self.time_per_frame)
 
   #methods
-  def create_cells_from_segmented_directory(self):
+  def create_cells_from_mask_directory(self):
+    '''
+    For each mask, there should be one cell instance. The cell number should get the bounding box
+
+    '''
+
     #1. get list of files
     input_path = os.path.join(self.base_path, self.mask_path)
     file_list = [image_file_name for image_file_name in os.listdir(input_path) if re.search(r'\.ti[f]{1,2}$', image_file_name) is not None]
@@ -61,7 +64,7 @@ class Experiment(models.Model):
       match = template.match(file_name)
 
       #these must exist or be created
-      series = self.series.get_or_create(index=match.group('series')) #subtract one from series.
+      series = self.series.create(index=match.group('series'))
       timestep = self.timesteps.get(series=series, index=match.group('timestep'))
       cell, created = self.cells.get_or_create(series=series, index=match.group('cell_index'))
       bb = cell_data_access(self.name, series.index, cell.index).bounding_box
