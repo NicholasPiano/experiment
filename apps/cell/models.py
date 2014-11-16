@@ -159,7 +159,7 @@ class CellInstance(models.Model):
 
     '''
 
-
+    self.position_volume_surface_area()
 
     ext = False
     print('Extensions...'),
@@ -169,14 +169,13 @@ class CellInstance(models.Model):
 
     print('done.' if ext else 'not calculated.')
 
-  def position_volume_and_surface_area(self):
+  def position_volume_surface_area(self):
     #1. resources
-    #- segmented image and mask
-    segmented_image = self.mask_image()
-    mask = np.array(np.invert(segmented_image), dtype=bool) #true values are ignored
+    #- mask
+    mask = np.array(np.invert(self.mask_array()), dtype=bool)
 
     #- bounding box
-    bounding_box = self.cell.bounding_box.get()
+    bounding_box = self.cell.bounding_box
 
     #- focus image set
     focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
@@ -188,7 +187,6 @@ class CellInstance(models.Model):
     #- get mean list
     mean_list = []
     array_3D = []
-    print(self.cell.bounding_box.get().all())
     for focus_image in focus_image_set.order_by('focus'):
       #load
       focus_image.load()
@@ -235,9 +233,7 @@ class CellInstance(models.Model):
     self.volume = array_3D_binary.sum()
 
     #- surface area
-    array_3D_neighbours = get_surface_elements(array_3D_binary)
-    array_3D_neighbours[array_3D_neighbours>9] = 0
-    self.surface_area = array_3D_neighbours.sum()
+    self.surface_area = array_3D_binary[self.position_z].sum() #area of the middle slice
 
     #save
     self.save()
@@ -259,15 +255,15 @@ class CellInstance(models.Model):
 
     #2. resources
     #- image -> self.mask
-    segmented_image = self.mask_image()
+    mask_array = self.mask_array()
 
-    #3. get edge
-    transform = distance_transform_edt(segmented_image)
+    #3. center of mass and edge
+    transform = distance_transform_edt(mask_array)
+    self.cm = np.rint(center_of_mass(transform)).astype(int)
     transform[transform==0] = transform.max() #max all zeros equal to max
     edge = np.argwhere(transform==transform.min()) #edge is the min of the new transform image -> (n, 2) np array
 
     #4. get distances and angles from COM
-    self.cm = self.find_center_of_mass()
     data = [edgel(i, e[0], e[1], math.sqrt((e[0]-self.cm[0])**2+(e[1]-self.cm[1])**2), math.atan2(e[0]-self.cm[0], e[1]-self.cm[1])) for (i,e) in enumerate(edge)]
 
     #5. trace along edge
@@ -314,19 +310,15 @@ class CellInstance(models.Model):
     self.save()
 
   def mask_array(self):
-    self.image.load()
+    if self.image.array is None:
+      self.image.load()
     return self.image.array
-
-  def find_center_of_mass(self):
-    segmented_image = self.mask_image()
-    transform = distance_transform_edt(segmented_image)
-    return np.rint(center_of_mass(transform)).astype(int)
 
 ### BoundingBox
 class BoundingBox(models.Model):
 
   #connections
-  cell = models.ForeignKey(Cell, related_name='bounding_box')
+  cell = models.OneToOneField(Cell, related_name='bounding_box')
 
   #properties
   x = models.IntegerField(default=0)
