@@ -43,7 +43,7 @@ class Command(BaseCommand):
 #         ax.plot(plot[0], plot[1], 'o', c=colors[i], alpha=0.5, label='region %d'%(i+1))
 
 #       #lines
-#       x = np.linspace(0, 10**6, 1000000)
+#       x = np.linspace(10**5, 10**6, 1000000)
 #       y0 = x
 #       ax.plot(x, y0, label='y=x')
 #       y1 = x**1.5

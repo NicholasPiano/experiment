@@ -162,8 +162,8 @@ class CellInstance(models.Model):
     3. Extensions
 
     '''
-
-    self.position_volume_surface_area()
+    if self.volume==0:
+      self.position_volume_surface_area()
 
     ext = False
     print('Extensions...'),
