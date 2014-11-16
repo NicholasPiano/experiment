@@ -64,8 +64,8 @@ class Experiment(models.Model):
       match = template.match(file_name)
 
       #these must exist or be created
-      series = self.series.create(index=match.group('series'))
-      timestep = self.timesteps.get(series=series, index=match.group('timestep'))
+      series, created = self.series.get_or_create(index=match.group('series'))
+      timestep, created = self.timesteps.get_or_create(series=series, index=match.group('timestep'))
       cell, created = self.cells.get_or_create(series=series, index=match.group('cell_index'))
       bb = cell_data_access(self.name, series.index, cell.index).bounding_box
       cell.bounding_box.get_or_create(x=bb.x, y=bb.y, w=bb.w, h=bb.h)
