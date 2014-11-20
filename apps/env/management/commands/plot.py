@@ -22,13 +22,37 @@ class Command(BaseCommand):
       ### PLOT 1
 
       Description: Volume and surface area scatter plot, colored by region
-      X: Surface area
-      Y: Volume
+      X: Surface area (log scale)
+      Y: Volume (log scale)
       Resources: cell instance list for each region
       Method: extract volume and surface area from each cell instance
 
       '''
 
+      for region in Region.objects.filter(index__range=(1,2)):
+
+        #1. for each region, need upper and lower bounds in terms of gradient.
+        #- get histogram of V/A
+        v = []
+        v_over_a = []
+        a = []
+        for cell_instance in region.cell_instances.all():
+          v.append(float(cell_instance.volume))
+          v_over_a.append(float(cell_instance.volume)/float(cell_instance.surface_area))
+          a.append(cell_instance.surface_area)
+
+        #plot histogram
+        plt.loglog(a, v, '*')
+#         plt.hist(v_over_a, 50)
+
+      #gradient lines
+      x = np.linspace(0, 10**7, 10**5)
+      y_1p0 = x
+      y_1p5 = x**1.5
+      plt.plot(x, y_1p0)
+      plt.plot(x, y_1p5)
+
+      plt.show()
 
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
