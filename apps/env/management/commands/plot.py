@@ -9,6 +9,9 @@ from apps.env.models import Region
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+from numpy.linalg import norm
+from scipy.stats import gaussian_kde
+from scipy.interpolate import interp1d
 
 class Command(BaseCommand):
     args = '<none>'
@@ -108,30 +111,30 @@ class Command(BaseCommand):
 
       '''
 
-      plots = [] #list of tuples
-      colors = ['blue', 'red', 'green', 'yellow'] #regions
+#       plots = [] #list of tuples
+#       colors = ['blue', 'red', 'green', 'yellow'] #regions
 
-      for cell in Cell.objects.filter(barrier_crossing_timestep__gt=-1):
-        x_barrier = cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x
-        for cell_instance in cell.cell_instances.all():
-          plots.append((x_barrier-cell_instance.position_x, np.linalg.norm(cell_instance.velocity()), colors[cell_instance.region.index-1]))
+#       for cell in Cell.objects.filter(barrier_crossing_timestep__gt=-1):
+#         x_barrier = cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x
+#         for cell_instance in cell.cell_instances.all():
+#           plots.append((x_barrier-cell_instance.position_x, np.linalg.norm(cell_instance.velocity()), colors[cell_instance.region.index-1]))
 
-      fig = plt.figure()
-      ax = plt.gca()
+#       fig = plt.figure()
+#       ax = plt.gca()
 
-      color_switch = {'blue':True, 'red':True, 'green':True, 'yellow':True}
-      for plot in plots:
-        if color_switch[plot[2]]:
-          ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5, label='region %d'%(colors.index(plot[2])+1))
-          color_switch[plot[2]] = False
-        else:
-          ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5)
+#       color_switch = {'blue':True, 'red':True, 'green':True, 'yellow':True}
+#       for plot in plots:
+#         if color_switch[plot[2]]:
+#           ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5, label='region %d'%(colors.index(plot[2])+1))
+#           color_switch[plot[2]] = False
+#         else:
+#           ax.plot(plot[0], plot[1], '-o', color=plot[2], alpha=0.5)
 
-      plt.legend()
-      plt.title('speed approaching barrier')
-      plt.ylabel('speed (pixels/timestep)')
-      plt.xlabel('x distance from barrier (pixels)')
-      plt.show()
+#       plt.legend()
+#       plt.title('speed approaching barrier')
+#       plt.ylabel('speed (pixels/timestep)')
+#       plt.xlabel('x distance from barrier (pixels)')
+#       plt.show()
 
       '''
       ### PLOT 4
@@ -254,10 +257,10 @@ class Command(BaseCommand):
 #       for cell in Cell.objects.all():
 #         for cell_instance in cell.cell_instances.all():
 # #           for extension in cell_instance.extensions.all():
-#           plots.append((float(cell_instance.max_extension_length), float(cell_instance.extensions.count())-1.57, colors[cell_instance.region.index-1]))
+#           plots.append((float(cell_instance.max_extension_angle), float(cell_instance.max_extension_length), colors[cell_instance.region.index-1]))
 
 #       fig = plt.figure()
-#       ax = plt.gca()
+#       ax = plt.gca(polar=True)
 
 #       color_switch = {'blue':True, 'red':True, 'green':True, 'yellow':True}
 #       for plot in plots:
@@ -280,6 +283,87 @@ class Command(BaseCommand):
       Method:
 
       '''
+
+      #get cells with high number of timepoints and low velocity
+#       cells = sorted(Cell.objects.filter(barrier_crossing_timestep__gt=0), key=lambda x: x.cell_instances.count())[:20]
+
+#       plots = []
+
+#       for cell in cells:
+#         plot = ([],[])
+
+#         if max([norm(cell_instance.velocity()) for cell_instance in cell.cell_instances.all()]) < 100:
+#           for cell_instance in cell.cell_instances.all():
+#             plot[0].append(cell_instance.position_x - cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x)
+#             plot[1].append(cell_instance.position_y)
+
+#         if len(plot[0])>0:
+# #           f = interp1d(plot[0], plot[1], kind='cubic')
+# #           plots.append((plot[0], f(plot[0])))
+#           plots.append(plot)
+
+#       for plot in plots:
+#         plt.plot(plot[0], plot[1])
+
+#       plt.title('Distance from barrier against position y')
+#       plt.xlabel('x position (pixels)')
+#       plt.ylabel('y position (pixels)')
+#       plt.show()
+
+      #cart
+#       for region in Region.objects.all():
+#         points = []
+#         for cell_instance in region.cell_instances.all():
+#           for extension in cell_instance.extensions.all():
+#             points.append([float(extension.length), float(extension.angle)])
+
+#         #put into array
+#         y = np.array([point[0] for point in points])
+#         x = np.array([point[1] for point in points])
+#         xy = np.vstack([x,y])
+#         z = gaussian_kde(xy)(xy)
+
+#         idx = z.argsort()
+#         x, y, z = x[idx], y[idx], z[idx]
+
+#         fig, ax = plt.subplots()
+#         ax.scatter(x, y, c=z, s=50, edgecolor='')
+
+#         plt.title('Density plot of extension length vs. extension angle')
+#         plt.ylabel('extension length (pixels)')
+#         plt.xlabel('extension angle (rads)')
+
+#         plt.savefig('plots/density_angle_length_region%d.png'%region.index)
+
+      #polar
+#       for region in Region.objects.all():
+#         points = []
+#         for cell_instance in region.cell_instances.all():
+#           for extension in cell_instance.extensions.all():
+#             points.append([float(extension.length), float(extension.angle)])
+
+#         #put into array
+#         y = np.array([point[0] for point in points])
+#         x = np.array([point[1] for point in points])
+#         xy = np.vstack([x,y])
+#         z = gaussian_kde(xy)(xy)
+
+#         idx = z.argsort()
+#         x, y, z = x[idx], y[idx], z[idx]
+
+#         fig = plt.figure()
+#         ax = fig.add_subplot(1,1,1,polar=True)
+#         ax.scatter(x, y, c=z, s=50, edgecolor='')
+
+#         plt.title('Density plot of extension length vs. extension angle')
+#         plt.ylabel('extension length (pixels)')
+#         plt.xlabel('extension angle (rads)')
+
+#         plt.savefig('plots/density_angle_length_region%d_polar.png'%region.index)
+
+
+
+
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)
