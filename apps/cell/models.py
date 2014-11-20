@@ -235,9 +235,13 @@ class CellInstance(models.Model):
 
     #- volume
     self.volume = array_3D_binary.sum()
+    print(self.volume)
+    print(array_3D_binary.shape)
 
     #- surface area
     self.surface_area = array_3D_binary[self.position_z].sum() #area of the middle slice
+    print(self.surface_area)
+    print(array_3D_binary[self.position_z].shape)
 
     #save
     self.save()
