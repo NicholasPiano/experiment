@@ -29,7 +29,8 @@ class Command(BaseCommand):
       Method: extract volume and surface area from each cell instance
 
       '''
-      x = np.linspace(0, 10**4, 10**4)
+      x = np.linspace(0, 2500, 10000)
+      print(x)
 
       for region in Region.objects.filter(index__range=(1,1)):
 
@@ -46,22 +47,21 @@ class Command(BaseCommand):
         A = np.vstack([a, np.ones(len(a))]).T
         m, c = np.linalg.lstsq(A, v)[0]
         y_c = m*x
-        print([m,c])
-        plt.plot(y_c)
+        plt.plot(x, y_c)
 
         v = np.array(v)
 
         #plot
-#         plt.plot(a, v, '*')
+        plt.plot(a, v, '*')
 #         plt.hist(v_over_a, 50)
-        plt.loglog(a, v, '*')
+#         plt.loglog(a, v, '*')
 
       #gradient lines
 
       y_1p0 = x
       y_1p5 = x**1.5
-      plt.plot(x, y_1p0)
-      plt.plot(x, y_1p5)
+#       plt.plot(x, y_1p0)
+#       plt.plot(x, y_1p5)
 
       plt.show()
 
