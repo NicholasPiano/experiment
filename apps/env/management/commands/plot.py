@@ -29,41 +29,43 @@ class Command(BaseCommand):
       Method: extract volume and surface area from each cell instance
 
       '''
-      x = np.linspace(0, 2500, 10000)
-      print(x)
+#       x = np.linspace(0, 10**3, 10**2)
 
-      for region in Region.objects.filter(index__range=(1,1)):
+#       for region in Region.objects.filter(index__range=(1,1)):
 
-        #1. for each region, need upper and lower bounds in terms of gradient.
-        #- get histogram of V/A
-        v = []
-        v_over_a = []
-        a = []
-        for cell_instance in region.cell_instances.all():
-          v.append(float(cell_instance.volume))
-          v_over_a.append(float(cell_instance.volume)/float(cell_instance.surface_area+1))
-          a.append(cell_instance.surface_area)
+#         #1. for each region, need upper and lower bounds in terms of gradient.
+#         #- get histogram of V/A
+#         v = []
+#         v_over_a = []
+#         a = []
+#         for cell_instance in region.cell_instances.all():
+#           v.append(float(cell_instance.volume))
+#           v_over_a.append(float(cell_instance.volume)/float(cell_instance.surface_area+1))
+#           a.append(cell_instance.surface_area)
 
-        A = np.vstack([a, np.ones(len(a))]).T
-        m, c = np.linalg.lstsq(A, v)[0]
-        y_c = m*x
-        plt.plot(x, y_c)
+#         A = np.vstack([np.array(a), np.ones(len(a))]).T
+#         m, c = np.linalg.lstsq(A, np.log(np.array(v)))[0]
+#         y_c = m*x
+#         print(y_c)
+#         plt.plot(x, np.power(y_c, 10))
 
-        v = np.array(v)
+#         v = np.array(v)
 
-        #plot
-        plt.plot(a, v, '*')
-#         plt.hist(v_over_a, 50)
-#         plt.loglog(a, v, '*')
+#         #plot
+#         plt.plot(a, v, '*')
+# #         plt.hist(v_over_a, 50)
+# #         plt.loglog(a, v, '*')
 
-      #gradient lines
+#       #gradient lines
 
-      y_1p0 = x
-      y_1p5 = x**1.5
-#       plt.plot(x, y_1p0)
-#       plt.plot(x, y_1p5)
+#       y_1p0 = x
+#       y_1p5 = x**1.5
+# #       plt.plot(x, y_1p0)
+# #       plt.plot(x, y_1p5)
 
-      plt.show()
+#       plt.show()
+
+      #get all mask images
 
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
