@@ -31,95 +31,80 @@ class Command(BaseCommand):
       Y: Volume (log scale)
       Resources: cell instance list for each region
       Method: extract volume and surface area from each cell instance
+      Tasks:
+      1. for each region, get surface and volume of each cell instance
+      2. using combined arrays, get 90% and 10% of all data.
+      3. Fit lines for each group
+      4. display x^1, x^1.5, 10%, and 90%.
+      5. diplays data colored by region.
 
       '''
-#       x = np.linspace(0, 10**3, 10**2)
 
-#       for region in Region.objects.filter(index__range=(1,1)):
+      fig = plt.figure()
+      ax = fig.add_subplot(111)
 
-#         #1. for each region, need upper and lower bounds in terms of gradient.
-#         #- get histogram of V/A
-#         v = []
-#         v_over_a = []
-#         a = []
-#         for cell_instance in region.cell_instances.all():
-#           v.append(float(cell_instance.volume))
-#           v_over_a.append(float(cell_instance.volume)/float(cell_instance.surface_area+1))
-#           a.append(cell_instance.surface_area)
+      ### LINES
 
-#         A = np.vstack([np.array(a), np.ones(len(a))]).T
-#         m, c = np.linalg.lstsq(A, np.log(np.array(v)))[0]
-#         y_c = m*x
-#         print(y_c)
-#         plt.plot(x, np.power(y_c, 10))
+      #x
+      x = np.linspace(0,10000,1000)
 
-#         v = np.array(v)
+      #data
+      grad10 = 0
+      grad90 = 0
 
-#         #plot
-#         plt.plot(a, v, '*')
-# #         plt.hist(v_over_a, 50)
-# #         plt.loglog(a, v, '*')
-
-#       #gradient lines
-
-#       y_1p0 = x
-#       y_1p5 = x**1.5
-# #       plt.plot(x, y_1p0)
-# #       plt.plot(x, y_1p5)
-
-#       plt.show()
-
-      #get all mask images
-      max_width = 0
+      grad = []
       for cell_instance in CellInstance.objects.all():
-        (x_b,y_b,w,h) = cell_instance.cell.bounding_box.get().all()
-        (x,y) = (cell_instance.position_x, cell_instance.position_y)
-        cell_instance_max = max([x-x_b,y-y_b,w-x+x_b,h-y+y_b])
-        max_width = max_width if max_width>cell_instance_max else cell_instance_max
+        grad.append(np.array([float(cell_instance.surface_area), float(cell_instance.volume), float(cell_instance.volume)/float(cell_instance.surface_area+1)]))
 
-      full_mask_shape = (2*max_width, 2*max_width)
+      #10%
+      p10 = np.percentile([g[2] for g in grad], 10)
+      data_10 = filter(lambda x: x[2]<p10, grad)
+      m_10 = np.linalg.lstsq(np.array([g[0] for g in data_10])[:,np.newaxis], np.array([g[1] for g in data_10]))[0][0]
 
-      complete_full_mask = np.zeros(full_mask_shape)
-      for cell_instance in CellInstance.objects.all():
-        print(cell_instance.pk)
-        #metrics
-        (x_b,y_b,w,h) = cell_instance.cell.bounding_box.get().all()
-        (x,y) = (cell_instance.position_x, cell_instance.position_y)
-        center_column = x-x_b
-        center_row = y-y_b
-        column_shift = max_width-center_column
-        row_shift = max_width-center_row
+      y_10 = m_10*x
 
-        #load image
-        full_mask = np.zeros(full_mask_shape)
-        mask = cell_instance.mask_array()/255.0
+      #90%
+      p90 = np.percentile([g[2] for g in grad], 90)
+      data_90 = filter(lambda x: x[2]>p90, grad)
+      m_90 = np.linalg.lstsq(np.array([g[0] for g in data_90])[:,np.newaxis], np.array([g[1] for g in data_90]))[0][0]
 
-        #position image
-        full_mask[row_shift:row_shift+h,column_shift:column_shift+w] = mask
-        complete_full_mask += full_mask
+      y_90 = m_90*x
 
-      complete_full_mask.dtype = float
+      #x^1
+      y_1 = x
 
-      #cut to size
-      b = (complete_full_mask!=0)
-      columns = np.all(b, axis=0)
-      rows = np.all(b, axis=1)
+      #x^1.5
+      y_15 = np.power(x, 1.5)
 
-      firstcol = columns.argmin()
-      firstrow = rows.argmin()
+      ax.plot(x, y_10, label='10th percentile (%f)' % m_10, alpha=0.5)
+      ax.plot(x, y_90, label='90th percentile (%f)' % m_90, alpha=0.5)
+      ax.plot(x, y_1, label='x^1', alpha=0.5)
+      ax.plot(x, y_15, label='x^1.5', alpha=0.5)
 
-      lastcol = len(columns) - columns[::-1].argmin()
-      lastrow = len(rows) - rows[::-1].argmin()
+      ### SCATTER
 
-      complete_full_mask = complete_full_mask[firstrow:lastrow,firstcol:lastcol]
+      colors = ['blue','red','green','yellow']
+      plots = []
+      for region in Region.objects.all():
+        plot = ([],[])
+        for cell_instance in region.cell_instances.all():
+          plot[0].append(cell_instance.surface_area)
+          plot[1].append(cell_instance.volume)
+        plots.append(plot)
 
-      #save image series
-      count = 0
-      while complete_full_mask.max()>0:
-        imsave(os.path.join(PLOT_DIR, 'density', 'image_%d.png'%count), complete_full_mask)
-        complete_full_mask[complete_full_mask==complete_full_mask.max()] = 0
-        count += 1
+      for i,plot in enumerate(plots):
+        color = colors[i]
+        x = plot[0]
+        y = plot[1]
+        ax.scatter(x,y, color=color, alpha=0.5, label='region %d'%(i+1))
 
+      ### SHOW
+
+      ax.set_xscale('log')
+      ax.set_yscale('log')
+
+      plt.legend()
+      plt.show()
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)

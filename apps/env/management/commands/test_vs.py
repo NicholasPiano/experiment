@@ -32,7 +32,9 @@ class Command(BaseCommand):
       total = CellInstance.objects.count()
       for cell_instance in CellInstance.objects.all():
         self.stdout.write('%d of %d: %s %d %d %d'%(cell_instance.pk, total, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
-        cell_instance.position_volume_surface_area()
+        cell_instance.surface_area = cell_instance.mask_array().sum()/100
+        cell_instance.save()
+
         self.stdout.write('volume: %d, surface_area: %d'%(int(cell_instance.volume), int(cell_instance.surface_area)))
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
