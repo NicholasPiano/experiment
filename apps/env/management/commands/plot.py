@@ -5,7 +5,7 @@ PLOT_DIR = settings.PLOT_DIR
 
 #local
 from apps.cell.models import CellInstance, Cell, Extension
-from apps.env.models import Region
+from apps.env.models import Region, Experiment
 
 #util
 import matplotlib.pyplot as plt
@@ -53,7 +53,7 @@ class Command(BaseCommand):
       grad90 = 0
 
       grad = []
-      for cell_instance in CellInstance.objects.all():
+      for cell_instance in CellInstance.objects.filter(region=Region.objects.get(index=4)):
         grad.append(np.array([float(cell_instance.surface_area), float(cell_instance.volume), float(cell_instance.volume)/float(cell_instance.surface_area+1)]))
 
       #10%
@@ -100,11 +100,104 @@ class Command(BaseCommand):
 
       ### SHOW
 
-      ax.set_xscale('log')
-      ax.set_yscale('log')
+#       ax.set_xscale('log')
+#       ax.set_yscale('log')
 
       plt.legend()
       plt.show()
+
+      '''
+      ### PLOT 2
+
+      Description: 12 density scatter plots of extension length and extension angle (polar)
+
+      '''
+
+#       fig = plt.figure()
+
+#       for i,region in enumerate(Region.objects.all()):
+#         for j,experiment in enumerate(Experiment.objects.all()):
+#           ax = fig.add_subplot(3, 4, i*3+j+1, polar=False)
+#           x = []
+#           y = []
+
+#           for cell_instance in experiment.cell_instances.filter(region=region):
+#             for extension in cell_instance.extensions.all():
+#               x.append(float(extension.length))
+#               y.append(float(extension.angle))
+
+#           x = np.array(x)
+#           y = np.array(y)
+#           if len(x)!=0:
+#             xy = np.vstack([x,y])
+#             z = gaussian_kde(xy)(xy)
+#             idx = z.argsort()
+#             x, y, z = x[idx], y[idx], z[idx]
+
+#             ax.scatter(y, x, c=z, s=50, edgecolor='')
+
+#       plt.show()
+
+      '''
+      ### PLOT 3
+
+      Description: 12 density scatter plots of extension length and extension angle (polar)
+
+      '''
+
+#       fig = plt.figure()
+
+#       for i,region in enumerate(Region.objects.all()):
+#         for j,experiment in enumerate(Experiment.objects.all()):
+#           ax = fig.add_subplot(3, 4, i*3+j+1, polar=False)
+#           x = []
+#           y = []
+
+#           for cell_instance in experiment.cell_instances.filter(region=region):
+#             x.append(float(cell_instance.max_extension_length))
+#             y.append(float(math.atan2(cell_instance.velocity_y, cell_instance.velocity_x)))
+
+#           print(y)
+#           x = np.array(x)
+#           y = np.array(y)
+#           if len(x)!=0:
+#             xy = np.vstack([x,y])
+#             z = gaussian_kde(xy)(xy)
+#             idx = z.argsort()
+#             x, y, z = x[idx], y[idx], z[idx]
+
+#             ax.scatter(y, x, c=z, s=50, edgecolor='')
+
+#       plt.show()
+
+      #get cells with high number of timepoints and low velocity
+#       cells = sorted(Cell.objects.filter(barrier_crossing_timestep__gt=0), key=lambda x: x.cell_instances.count())[:20]
+
+#       plots = []
+
+#       for cell in cells:
+#         plot = ([],[])
+
+#         if max([norm(cell_instance.velocity()) for cell_instance in cell.cell_instances.all()]) < 100:
+#           for cell_instance in cell.cell_instances.all():
+#             plot[0].append(cell_instance.position_x - cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x)
+#             plot[1].append(cell_instance.position_y)
+
+#         if len(plot[0])>0:
+# #           f = interp1d(plot[0], plot[1], kind='cubic')
+# #           plots.append((plot[0], f(plot[0])))
+#           plots.append(plot)
+
+#       colors = ['blue','red','green','yellow','purple','black','pink','gray']
+#       for i,plot in enumerate(plots):
+#         plt.plot(plot[0], plot[1], linewidth=3, alpha=0.7, color=colors[i])
+#         plt.plot(plot[0][0], plot[1][0], 'd', color=colors[i])
+
+#       plt.title('Distance from barrier against position y')
+#       plt.xlabel('x position (pixels)')
+#       plt.ylabel('y position (pixels)')
+#       plt.show()
+
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)
