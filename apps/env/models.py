@@ -10,6 +10,7 @@ from apps.cell.data import access as cell_data_access
 import os
 import re
 from scipy.misc import imread, imsave
+import numpy as np
 
 ### Region
 class Region(models.Model):
@@ -35,6 +36,9 @@ class Experiment(models.Model):
   x_microns_over_pixels = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
   y_microns_over_pixels = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
   z_microns_over_pixels = models.DecimalField(default=0.0, decimal_places=4, max_digits=6)
+
+  def microns_over_pixels(self):
+    return np.array([self.x_microns_over_pixels, self.y_microns_over_pixels, self.z_microns_over_pixels])
 
   def volume(self, voxels): #returns microns cubed
     return voxels*float(self.x_microns_over_pixels*self.y_microns_over_pixels*self.z_microns_over_pixels)
