@@ -514,15 +514,8 @@ class Command(BaseCommand):
       '''
       pks = [191,232,574,747] #region 4,3,2,1
 
-      for cell_instance in CellInstance.objects.all():
-        #details
-#         experiment_name = cell_instance.experiment.name
-#         series_index = cell_instance.series.index
-#         cell_index = cell_instance.cell.index
-#         timestep = cell_instance.timestep.index
-#         x = cell_instance.position_x
-#         y = cell_instance.position_y
-#         z = cell_instance.position_z
+      for pk in pks:
+        cell_instance = CellInstance.objects.get(pk=pk)
 
         #print details
         self.stdout.write('CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
