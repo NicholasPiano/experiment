@@ -520,38 +520,43 @@ class Command(BaseCommand):
         #print details
         self.stdout.write('CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
 
-        #print out outline of bounding box onto original bf image
+        #get all three images
         brightfield_image = cell_instance.experiment.images.get(series=cell_instance.series, timestep=cell_instance.timestep, focus=cell_instance.position_z, channel=1)
-        (x,y,w,h) = cell_instance.cell.bounding_box.get().all()
-
         brightfield_image.load()
-
         bf_array = brightfield_image.array
-        bf_max = bf_array.max()
 
-        outline_image = np.zeros(bf_array.shape, dtype=bool)
+        gfp_image = cell_instance.experiment.images.get(series=cell_instance.series, timestep=cell_instance.timestep, focus=cell_instance.position_z, channel=0)
+        gfp_image.load()
+        gfp_array = gfp_image.array
 
-        #bounding box
-        outline_image[y:y+h-1,x] = True
-        outline_image[y:y+h-1,x+w] = True
-        outline_image[y,x:x+w-1] = True
-        outline_image[y+h-1,x:x+w-1] = True
-
-        #cell instance mask
         mask_array = cell_instance.mask_array().astype(int)
         mask_array[mask_array==255] = 1
         dilated_mask_array = dilate(mask_array)
-
         edge_array = np.array(dilated_mask_array - mask_array, dtype=bool)
 
-        outline_image[y+1:y+h-1,x+1:x+w-1] = edge_array[1:-1,1:-1]
+        (x,y,w,h) = cell_instance.cell.bounding_box.get().all()
 
-        #apply outline
-        bf_array[outline_image] = 255
+        #image 1: mask on black background
+        #just use mask_array
+        mask_array[mask_array==1] = 255
 
-        file_name = '%d_%d_'%(cell_instance.pk, cell_instance.cell.index) + brightfield_image.file_name
+        #image 2: thresholded gfp on top of bf image
+        gfp_threshold_array = np.zeros(gfp_array.shape, dtype=bool)
+        gfp_threshold_array[gfp_array>gfp_array.mean()] = True
+        gfp_bf = bf_array
+        gfp_bf[gfp_threshold_array] = 255
 
-        imsave(os.path.join('/','Volumes','transport','data','confocal','mask',file_name), bf_array)
+        gfp_bf = gfp_bf[x:x+w, y:y+h]
+
+        #image 3: mask outline on bf
+        #image 4: mask outline on gfp
+
+        #concatenate and save
+#         bf_array[outline_image] = 255
+
+#         file_name = '%d_%d_'%(cell_instance.pk, cell_instance.cell.index) + brightfield_image.file_name
+
+#         imsave(os.path.join('/','Volumes','transport','data','confocal','mask',file_name), bf_array)
 
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
