@@ -6,6 +6,9 @@ PLOT_DIR = settings.PLOT_DIR
 #local
 from apps.cell.models import CellInstance, Cell, Extension
 from apps.env.models import Region, Experiment
+from apps.image.util.life.life import Life
+from apps.image.util.life.rule import CoagulationsFillInVote
+from apps.image.util.tools import get_surface_elements
 
 #util
 import matplotlib
@@ -503,7 +506,7 @@ class Command(BaseCommand):
 ###
 
       '''
-      ### PLOT 3F: masks and 3D reconstructions
+      ### PLOT 3F: masks
 
       Description:
       X:
@@ -512,51 +515,138 @@ class Command(BaseCommand):
       Method:
 
       '''
+###
+#       pks = [191,232,574,747] #region 4,3,2,1
+
+#       for pk in pks:
+#         cell_instance = CellInstance.objects.get(pk=pk)
+
+#         #print details
+#         self.stdout.write('CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
+
+#         #get all three images
+#         brightfield_image = cell_instance.experiment.images.get(series=cell_instance.series, timestep=cell_instance.timestep, focus=cell_instance.position_z, channel=1)
+#         brightfield_image.load()
+#         bf_array = brightfield_image.array
+
+#         gfp_image = cell_instance.experiment.images.get(series=cell_instance.series, timestep=cell_instance.timestep, focus=cell_instance.position_z, channel=0)
+#         gfp_image.load()
+#         gfp_array = gfp_image.array
+
+#         mask_array = cell_instance.mask_array().astype(int)
+#         mask_array[mask_array==255] = 1
+#         dilated_mask_array = dilate(mask_array)
+#         edge_array = np.array(dilated_mask_array - mask_array, dtype=bool)
+
+#         (x,y,w,h) = cell_instance.cell.bounding_box.get().all()
+
+#         #image 1: mask on black background
+#         #just use mask_array
+#         mask_array[mask_array==1] = 255
+
+#         #image 2: thresholded gfp on top of bf image
+#         bf_array_cut = np.array(bf_array[y:y+h-1,x:x+w-1])
+#         gfp_array_cut = np.array(gfp_array[y:y+h-1,x:x+w-1])
+
+#         gfp_threshold_array = np.zeros(bf_array_cut.shape, dtype=bool)
+#         gfp_threshold_array[gfp_array_cut>gfp_array_cut.mean()] = True
+#         gfp_threshold_array[mask_array[1:-1,1:-1]==0] = False
+
+#         gfp_bf = bf_array_cut
+#         gfp_bf[gfp_threshold_array] = 200
+
+#         #image 3: mask outline on bf
+#         mask_outline_bf = np.array(bf_array[y:y+h-1,x:x+w-1])
+#         mask_outline_bf[edge_array] = 255
+
+#         #image 4: mask outline on gfp
+#         mask_outline_gfp = np.array(gfp_array[y:y+h-1,x:x+w-1])
+#         mask_outline_gfp[edge_array] = 255
+
+#         #concatenate and save
+#         concat = np.hstack((mask_array[1:,1:], gfp_bf, mask_outline_bf, mask_outline_gfp))
+
+#         file_name = '%d_%d_'%(cell_instance.pk, cell_instance.cell.index) + brightfield_image.file_name
+
+#         imsave(os.path.join('/','Volumes','transport','data','confocal','mask',file_name), concat)
+###
+
+      '''
+      ### PLOT 3F: 3D reconstructions
+
+      Description:
+      X:
+      Y:
+      Resources:
+      Method:
+
+      '''
+###
       pks = [191,232,574,747] #region 4,3,2,1
 
       for pk in pks:
         cell_instance = CellInstance.objects.get(pk=pk)
-
-        #print details
         self.stdout.write('CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
+        #1. resources
+        #- mask
+        mask = np.array(np.invert(cell_instance.mask_array()), dtype=bool)
 
-        #get all three images
-        brightfield_image = cell_instance.experiment.images.get(series=cell_instance.series, timestep=cell_instance.timestep, focus=cell_instance.position_z, channel=1)
-        brightfield_image.load()
-        bf_array = brightfield_image.array
+        #- bounding box
+        bounding_box = cell_instance.cell.bounding_box.get()
 
-        gfp_image = cell_instance.experiment.images.get(series=cell_instance.series, timestep=cell_instance.timestep, focus=cell_instance.position_z, channel=0)
-        gfp_image.load()
-        gfp_array = gfp_image.array
+        #- focus image set
+        focus_image_set = cell_instance.experiment.images.filter(series=cell_instance.cell.series, timestep=cell_instance.timestep, channel=0) #only gfp
 
-        mask_array = cell_instance.mask_array().astype(int)
-        mask_array[mask_array==255] = 1
-        dilated_mask_array = dilate(mask_array)
-        edge_array = np.array(dilated_mask_array - mask_array, dtype=bool)
+        #2. first loop:
+        #- load images
+        #- cut to bounding box
+        #- mask with segmented image
+        #- get mean list
+        mean_list = []
+        array_3D = []
+        for focus_image in focus_image_set.order_by('focus'):
+          #load
+          focus_image.load()
+          #cut
+          cut_image = bounding_box.cut(focus_image.array)
+          #mask
+          focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
+          #mean
+          mean_list.append(focus_image.array.mean()) # <<< mean list
+          focus_image.mean = focus_image.array.mean()
+          focus_image.save()
+          #3D
+          array_3D.append(focus_image.array.filled())
+          focus_image.unload()
 
-        (x,y,w,h) = cell_instance.cell.bounding_box.get().all()
+        global_mean = np.sum(mean_list)/float(len(mean_list))
+        array_3D = np.array(array_3D)
 
-        #image 1: mask on black background
-        #just use mask_array
-        mask_array[mask_array==1] = 255
+        #3. second loop
+        #- threshold
+        array_3D_binary = np.zeros(array_3D.shape)
+        array_3D_binary[array_3D>global_mean] = 1
 
-        #image 2: thresholded gfp on top of bf image
-        gfp_threshold_array = np.zeros(gfp_array.shape, dtype=bool)
-        gfp_threshold_array[gfp_array>gfp_array.mean()] = True
-        gfp_bf = bf_array
-        gfp_bf[gfp_threshold_array] = 255
+        #- run life
+        for i in range(array_3D.shape[0]):
+          array_binary = array_3D_binary[i]
 
-        gfp_bf = gfp_bf[x:x+w, y:y+h]
+          life = Life(array_binary)
+          life.ruleset = CoagulationsFillInVote()
+          life.ruleset.timestamps = [2,4,4]
+          life.update_cycle()
 
-        #image 3: mask outline on bf
-        #image 4: mask outline on gfp
+          array_3D_binary[i] = life.array
 
-        #concatenate and save
-#         bf_array[outline_image] = 255
+        #5. mask 3D array
+        array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
+        array_3D_masked = array_3D_masked.filled()
 
-#         file_name = '%d_%d_'%(cell_instance.pk, cell_instance.cell.index) + brightfield_image.file_name
-
-#         imsave(os.path.join('/','Volumes','transport','data','confocal','mask',file_name), bf_array)
+        #print
+        for i in range(array_3D_masked.shape[0]):
+          array_masked = array_3D_masked[i]
+          file_name = 'image_pk%d_z%d.tiff'%(pk, i)
+          imsave(os.path.join('/','Volumes','transport','data','confocal','3D',str(pk),file_name), array_masked)
 
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
