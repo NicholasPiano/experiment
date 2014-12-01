@@ -19,6 +19,7 @@ from scipy.stats import gaussian_kde
 from scipy.interpolate import interp1d
 import scipy.optimize as optimization
 from scipy.misc import imread, imsave
+from scipy.ndimage import binary_dilation as dilate
 
 font = {'family' : 'normal',
         'weight' : 'bold',
@@ -131,9 +132,22 @@ class Command(BaseCommand):
 #         ax.set_ylim([min_v, max_v])
 
 #         #scatter
-#         ax.scatter([d[0] for d in data], [d[1] for d in data])
+#         x = np.array([d[0] for d in data])
+#         y = np.array([d[1] for d in data])
+#         xy = np.vstack([x,y])
+#         z = gaussian_kde(xy)(xy)
+#         idx = z.argsort()
+#         x, y, z = x[idx], y[idx], z[idx]
+
+#         ax.scatter(x, y, c=z, s=50, edgecolor='')
+
+#         ax.set_title('Region %d'%region.index)
+#         if region.index==1:
+#           plt.xlabel('Surface area (sq. microns)')
+#           plt.ylabel('Volume (cubic microns)')
 #         ax.legend()
 
+#       fig.suptitle('Surface area against volume in each region with bounding lines')
 #       plt.show()
 ###
 
@@ -202,11 +216,23 @@ class Command(BaseCommand):
 #         ax.set_ylim([min_v, max_v])
 
 #         #scatter
-#         ax.scatter([d[0] for d in data], [d[1] for d in data])
+#         x = np.array([d[0] for d in data])
+#         y = np.array([d[1] for d in data])
+#         xy = np.vstack([x,y])
+#         z = gaussian_kde(xy)(xy)
+#         idx = z.argsort()
+#         x, y, z = x[idx], y[idx], z[idx]
+
+#         ax.scatter(x, y, c=z, s=50, edgecolor='')
 #         ax.set_xscale('log')
 #         ax.set_yscale('log')
+#         ax.set_title('Region %d'%region.index)
+#         if region.index==1:
+#           plt.xlabel('Surface area (sq. microns)')
+#           plt.ylabel('Volume (cubic microns)')
 #         ax.legend(loc='lower center')
 
+#       fig.suptitle('Surface area against volume in each region with bounding lines (log-log)')
 #       plt.show()
 ###
 
@@ -239,6 +265,7 @@ class Command(BaseCommand):
 #         ax = fig.add_subplot(axs[region.index-1])
 #         ax.set_ylim([0,max_length])
 #         ax.set_xlim([-4,4])
+#         ax.set_title('Region %d'%region.index)
 
 #         x = np.array(data[0])
 #         y = np.array(data[1])
@@ -253,20 +280,13 @@ class Command(BaseCommand):
 #         x, y, z = x[idx], y[idx], z[idx]
 
 #         ax.scatter(x, y, c=z, s=50, edgecolor='')
+#         if region.index==1:
+#           plt.xlabel('off-centre angle (radians)')
+#           plt.ylabel('extension length (microns)')
 
+#       fig.suptitle('Extension length against extension orientation')
 #       plt.show()
 ###
-
-#       cell_instance = CellInstance.objects.get(pk=1002)
-
-#       mask = cell_instance.mask_array()
-
-#       print([(float(extension.length), float(extension.angle)*180.0/math.pi) for extension in cell_instance.extensions.all()])
-
-#       plt.imshow(mask)
-#       plt.show()
-
-
 
       '''
       ### PLOT 3B-2: 4 region plots
@@ -296,6 +316,7 @@ class Command(BaseCommand):
 
 #         ax = fig.add_subplot(axs[region.index-1], polar=True)
 #         ax.set_ylim([0,max_length])
+#         ax.set_title('Region %d'%region.index)
 
 #         x = np.array(data[0])
 #         y = np.array(data[1])
@@ -310,7 +331,10 @@ class Command(BaseCommand):
 #         x, y, z = x[idx], y[idx], z[idx]
 
 #         ax.scatter(x, y, c=z, s=50, edgecolor='')
+#         if region.index==1:
+#           plt.xlabel('off-centre angle (radians)')
 
+#       fig.suptitle('Extension length against extension orientation')
 #       plt.show()
 ###
 
@@ -340,6 +364,8 @@ class Command(BaseCommand):
 ###
 #       fig = plt.figure()
 #       axs = [141, 142, 143, 144]
+#       max_count = max([cell_instance.extensions.count() for cell_instance in CellInstance.objects.all()])
+#       max_length = max([float(cell_instance.max_extension_length*cell_instance.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.all()])
 
 #       for region in Region.objects.all(): #one plot per region
 #         ax = fig.add_subplot(axs[int(region.index-1)])
@@ -350,9 +376,23 @@ class Command(BaseCommand):
 #           data[0].append(cell_instance.extensions.count())
 #           data[1].append(cell_instance.max_extension_length*cell_instance.experiment.x_microns_over_pixels)
 
-#         ax.scatter(data[0], data[1])
-#         ax.set_title('region %d'%region.index)
+#         x = np.array(data[0], dtype=float)
+#         y = np.array(data[1], dtype=float)
 
+#         xy = np.vstack([x,y])
+#         z = gaussian_kde(xy)(xy)
+#         idx = z.argsort()
+#         x, y, z = x[idx], y[idx], z[idx]
+
+#         ax.scatter(x, y, c=z, s=50, edgecolor='')
+#         ax.set_title('region %d'%region.index)
+#         ax.set_xlim([0,max_count])
+#         ax.set_ylim([0,max_length])
+#         if region.index==1:
+#           plt.xlabel('Number of extensions per cell')
+#           plt.ylabel('Maximum extension length (microns)')
+
+#       fig.suptitle('Number of extensions per cell against maximum cellular extension length')
 #       plt.show()
 ###
 
@@ -461,6 +501,64 @@ class Command(BaseCommand):
 #       plt.gca().yaxis.set_major_locator(MaxNLocator(prune='lower'))
 #       plt.show()
 ###
+
+      '''
+      ### PLOT 3F: masks and 3D reconstructions
+
+      Description:
+      X:
+      Y:
+      Resources:
+      Method:
+
+      '''
+      pks = [191,232,574,747] #region 4,3,2,1
+
+      for cell_instance in CellInstance.objects.all():
+        #details
+#         experiment_name = cell_instance.experiment.name
+#         series_index = cell_instance.series.index
+#         cell_index = cell_instance.cell.index
+#         timestep = cell_instance.timestep.index
+#         x = cell_instance.position_x
+#         y = cell_instance.position_y
+#         z = cell_instance.position_z
+
+        #print details
+        self.stdout.write('CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
+
+        #print out outline of bounding box onto original bf image
+        brightfield_image = cell_instance.experiment.images.get(series=cell_instance.series, timestep=cell_instance.timestep, focus=cell_instance.position_z, channel=1)
+        (x,y,w,h) = cell_instance.cell.bounding_box.get().all()
+
+        brightfield_image.load()
+
+        bf_array = brightfield_image.array
+        bf_max = bf_array.max()
+
+        outline_image = np.zeros(bf_array.shape, dtype=bool)
+
+        #bounding box
+        outline_image[y:y+h-1,x] = True
+        outline_image[y:y+h-1,x+w] = True
+        outline_image[y,x:x+w-1] = True
+        outline_image[y+h-1,x:x+w-1] = True
+
+        #cell instance mask
+        mask_array = cell_instance.mask_array().astype(int)
+        mask_array[mask_array==255] = 1
+        dilated_mask_array = dilate(mask_array)
+
+        edge_array = np.array(dilated_mask_array - mask_array, dtype=bool)
+
+        outline_image[y+1:y+h-1,x+1:x+w-1] = edge_array[1:-1,1:-1]
+
+        #apply outline
+        bf_array[outline_image] = 255
+
+        file_name = '%d_%d_'%(cell_instance.pk, cell_instance.cell.index) + brightfield_image.file_name
+
+        imsave(os.path.join('/','Volumes','transport','data','confocal','mask',file_name), bf_array)
 
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
