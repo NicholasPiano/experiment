@@ -87,71 +87,71 @@ class Command(BaseCommand):
 
       '''
 ###
-#       #tasks
-#       #1. get all data points for volume and surface area
-#       #2. fit lines to the upper and lower 10th percentiles of the data
-#       #3. plot data, fit lines, x^1, x^1.5
+      #tasks
+      #1. get all data points for volume and surface area
+      #2. fit lines to the upper and lower 10th percentiles of the data
+      #3. plot data, fit lines, x^1, x^1.5
 
-#       fig = plt.figure()
-#       axs = [141,142,143,144]
+      fig = plt.figure()
+      axs = [141,142,143,144]
 
-#       sa = [cell_instance.experiment.area(cell_instance.surface_area) for cell_instance in CellInstance.objects.all()]
-#       min_sa = min(sa)
-#       max_sa = max(sa)
+      sa = [cell_instance.experiment.area(cell_instance.surface_area) for cell_instance in CellInstance.objects.all()]
+      min_sa = min(sa)
+      max_sa = max(sa)
 
-#       v = [cell_instance.experiment.volume(cell_instance.volume) for cell_instance in CellInstance.objects.all()]
-#       min_v = min(v)
-#       max_v = max(v)
+      v = [cell_instance.experiment.volume(cell_instance.volume) for cell_instance in CellInstance.objects.all()]
+      min_v = min(v)
+      max_v = max(v)
 
-#       for region in Region.objects.all():
-#         data = []
-#         for cell_instance in region.cell_instances.all():
-#           data.append(np.array([float(cell_instance.experiment.area(cell_instance.surface_area)), float(cell_instance.experiment.volume(cell_instance.volume)), float(cell_instance.experiment.area(cell_instance.surface_area))/float(cell_instance.experiment.volume(cell_instance.volume))]))
+      for region in Region.objects.all():
+        data = []
+        for cell_instance in region.cell_instances.all():
+          data.append(np.array([float(cell_instance.experiment.area(cell_instance.surface_area)), float(cell_instance.experiment.volume(cell_instance.volume)), float(cell_instance.experiment.area(cell_instance.surface_area))/float(cell_instance.experiment.volume(cell_instance.volume))]))
 
-#         ax = fig.add_subplot(axs[region.index-1])
+        ax = fig.add_subplot(axs[region.index-1])
 
-#         #lines
-#         gradients = np.array([d[2] for d in data])
-#         p10 = np.percentile(gradients, 10)
-#         p90 = np.percentile(gradients, 90)
-#         data10 = filter(lambda k: k[2]<p10, data)
-#         data90 = filter(lambda k: k[2]>p90, data)
+        #lines
+        gradients = np.array([d[2] for d in data])
+        p10 = np.percentile(gradients, 10)
+        p90 = np.percentile(gradients, 90)
+        data10 = filter(lambda k: k[2]<p10, data)
+        data90 = filter(lambda k: k[2]>p90, data)
 
-#         m10 = np.linalg.lstsq(np.array([g[0] for g in data10])[:,np.newaxis], np.array([g[1] for g in data10]))[0][0]
-#         m90 = np.linalg.lstsq(np.array([g[0] for g in data90])[:,np.newaxis], np.array([g[1] for g in data90]))[0][0]
+        m10 = np.linalg.lstsq(np.array([g[0] for g in data10])[:,np.newaxis], np.array([g[1] for g in data10]))[0][0]
+        m90 = np.linalg.lstsq(np.array([g[0] for g in data90])[:,np.newaxis], np.array([g[1] for g in data90]))[0][0]
 
-#         x = np.linspace(0,max_sa,max_sa)
+        x = np.linspace(0,max_sa,max_sa)
 
-#         y10 = m10*x
-#         y90 = m90*x
+        y10 = m10*x
+        y90 = m90*x
 
-#         ax.plot(x, y10, label='10pc (m=%.2f)'%m10)
-#         ax.plot(x, y90, label='90pc (m=%.2f)'%m90)
-#         ax.plot(x, x**1, label='y=x')
-#         ax.plot(x, x**1.5, label='y=x^1.5')
+        ax.plot(x, y10, label='10pc (m=%.2f)'%m10)
+        ax.plot(x, y90, label='90pc (m=%.2f)'%m90)
+        ax.plot(x, x**1, label='y=x')
+        ax.plot(x, x**1.5, label='y=x^1.5')
 
-#         #ranges
-#         ax.set_xlim([min_sa, max_sa])
-#         ax.set_ylim([min_v, max_v])
+        #ranges
+        ax.set_xlim([min_sa, max_sa])
+        ax.set_ylim([min_v, 20000])
 
-#         #scatter
-#         x = np.array([d[0] for d in data])
-#         y = np.array([d[1] for d in data])
-#         xy = np.vstack([x,y])
-#         z = gaussian_kde(xy)(xy)
-#         idx = z.argsort()
-#         x, y, z = x[idx], y[idx], z[idx]
+        #scatter
+        x = np.array([d[0] for d in data])
+        y = np.array([d[1] for d in data])
+        xy = np.vstack([x,y])
+        z = gaussian_kde(xy)(xy)
+        idx = z.argsort()
+        x, y, z = x[idx], y[idx], z[idx]
 
-#         ax.scatter(x, y, c=z, s=50, edgecolor='')
+        ax.scatter(x, y, c=z, s=50, edgecolor='')
 
-#         ax.set_title('Region %d'%region.index)
-#         if region.index==1:
-#           plt.xlabel('Surface area (sq. microns)')
-#           plt.ylabel('Volume (cubic microns)')
-#         ax.legend()
+        ax.set_title('Region %d'%region.index)
+        if region.index==1:
+          plt.xlabel('Surface area (sq. microns)')
+          plt.ylabel('Volume (cubic microns)')
+        ax.legend()
 
-#       fig.suptitle('Surface area against volume in each region with bounding lines')
-#       plt.show()
+      fig.suptitle('Surface area against volume in each region with bounding lines')
+      plt.show()
 ###
 
       '''
@@ -262,20 +262,21 @@ class Command(BaseCommand):
 #         data = ([],[])
 #         for extension in region.extensions.all():
 #           c = corrections[extension.cell.experiment.name]
-#           data[0].append(float(c[0])*float(extension.angle) + float(c[1]))
+#           data[0].append((float(c[0])*float(extension.angle) + float(c[1]))*float(180.0/math.pi))
+# #           data[0].append(float(c[0])*float(extension.angle) + float(c[1]))
 #           data[1].append(float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels))
 
 #         ax = fig.add_subplot(axs[region.index-1])
 #         ax.set_ylim([0,max_length])
-#         ax.set_xlim([-4,4])
+#         ax.set_xlim([-190,190])
 #         ax.set_title('Region %d'%region.index)
 
 #         x = np.array(data[0])
 #         y = np.array(data[1])
 
 #         #translate
-#         x[x>math.pi] -= 2*math.pi
-#         x[x<-math.pi] += 2*math.pi
+#         x[x>180] -= 360
+#         x[x<-180] += 360
 
 #         xy = np.vstack([x,y])
 #         z = gaussian_kde(xy)(xy)
@@ -284,7 +285,7 @@ class Command(BaseCommand):
 
 #         ax.scatter(x, y, c=z, s=50, edgecolor='')
 #         if region.index==1:
-#           plt.xlabel('off-centre angle (radians)')
+#           plt.xlabel('off-centre angle (degrees)')
 #           plt.ylabel('extension length (microns)')
 
 #       fig.suptitle('Extension length against extension orientation')
@@ -582,72 +583,72 @@ class Command(BaseCommand):
 
       '''
 ###
-      pks = [191,232,574,747] #region 4,3,2,1
+#       pks = [191,232,574,747] #region 4,3,2,1
 
-      for pk in pks:
-        cell_instance = CellInstance.objects.get(pk=pk)
-        self.stdout.write('CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
-        #1. resources
-        #- mask
-        mask = np.array(np.invert(cell_instance.mask_array()), dtype=bool)
+#       for pk in pks:
+#         cell_instance = CellInstance.objects.get(pk=pk)
+#         self.stdout.write('CellInstance %d: %s, %d, %d, %d'%(cell_instance.pk, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
+#         #1. resources
+#         #- mask
+#         mask = np.array(np.invert(cell_instance.mask_array()), dtype=bool)
 
-        #- bounding box
-        bounding_box = cell_instance.cell.bounding_box.get()
+#         #- bounding box
+#         bounding_box = cell_instance.cell.bounding_box.get()
 
-        #- focus image set
-        focus_image_set = cell_instance.experiment.images.filter(series=cell_instance.cell.series, timestep=cell_instance.timestep, channel=0) #only gfp
+#         #- focus image set
+#         focus_image_set = cell_instance.experiment.images.filter(series=cell_instance.cell.series, timestep=cell_instance.timestep, channel=0) #only gfp
 
-        #2. first loop:
-        #- load images
-        #- cut to bounding box
-        #- mask with segmented image
-        #- get mean list
-        mean_list = []
-        array_3D = []
-        for focus_image in focus_image_set.order_by('focus'):
-          #load
-          focus_image.load()
-          #cut
-          cut_image = bounding_box.cut(focus_image.array)
-          #mask
-          focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
-          #mean
-          mean_list.append(focus_image.array.mean()) # <<< mean list
-          focus_image.mean = focus_image.array.mean()
-          focus_image.save()
-          #3D
-          array_3D.append(focus_image.array.filled())
-          focus_image.unload()
+#         #2. first loop:
+#         #- load images
+#         #- cut to bounding box
+#         #- mask with segmented image
+#         #- get mean list
+#         mean_list = []
+#         array_3D = []
+#         for focus_image in focus_image_set.order_by('focus'):
+#           #load
+#           focus_image.load()
+#           #cut
+#           cut_image = bounding_box.cut(focus_image.array)
+#           #mask
+#           focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
+#           #mean
+#           mean_list.append(focus_image.array.mean()) # <<< mean list
+#           focus_image.mean = focus_image.array.mean()
+#           focus_image.save()
+#           #3D
+#           array_3D.append(focus_image.array.filled())
+#           focus_image.unload()
 
-        global_mean = np.sum(mean_list)/float(len(mean_list))
-        array_3D = np.array(array_3D)
+#         global_mean = np.sum(mean_list)/float(len(mean_list))
+#         array_3D = np.array(array_3D)
 
-        #3. second loop
-        #- threshold
-        array_3D_binary = np.zeros(array_3D.shape)
-        array_3D_binary[array_3D>global_mean] = 1
+#         #3. second loop
+#         #- threshold
+#         array_3D_binary = np.zeros(array_3D.shape)
+#         array_3D_binary[array_3D>global_mean] = 1
 
-        #- run life
-        for i in range(array_3D.shape[0]):
-          array_binary = array_3D_binary[i]
+#         #- run life
+#         for i in range(array_3D.shape[0]):
+#           array_binary = array_3D_binary[i]
 
-          life = Life(array_binary)
-          life.ruleset = CoagulationsFillInVote()
-          life.ruleset.timestamps = [2,4,4]
-          life.update_cycle()
+#           life = Life(array_binary)
+#           life.ruleset = CoagulationsFillInVote()
+#           life.ruleset.timestamps = [2,4,4]
+#           life.update_cycle()
 
-          array_3D_binary[i] = life.array
+#           array_3D_binary[i] = life.array
 
-        #5. mask 3D array
-        array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
-        array_3D_masked = array_3D_masked.filled()
+#         #5. mask 3D array
+#         array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
+#         array_3D_masked = array_3D_masked.filled()
 
-        #print
-        for i in range(array_3D_masked.shape[0]):
-          array_masked = array_3D_masked[i]
-          file_name = 'image_pk%d_z%d.tiff'%(pk, i)
-          imsave(os.path.join('/','Volumes','transport','data','confocal','3D',str(pk),file_name), array_masked)
-
+#         #print
+#         for i in range(array_3D_masked.shape[0]):
+#           array_masked = array_3D_masked[i]
+#           file_name = 'image_pk%d_z%d.tiff'%(pk, i)
+#           imsave(os.path.join('/','Volumes','transport','data','confocal','3D',str(pk),file_name), array_masked)
+###
 
 #error: raise CommandError('Poll "%s" does not exist' % poll_id)
 #write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)
