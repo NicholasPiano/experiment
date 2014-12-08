@@ -23,6 +23,8 @@ from scipy.interpolate import interp1d
 import scipy.optimize as optimization
 from scipy.misc import imread, imsave
 from scipy.ndimage import binary_dilation as dilate
+from matplotlib.ticker import NullFormatter
+nullfmt   = NullFormatter()
 
 font = {'family' : 'normal',
         'weight' : 'bold',
@@ -87,71 +89,71 @@ class Command(BaseCommand):
 
       '''
 ###
-      #tasks
-      #1. get all data points for volume and surface area
-      #2. fit lines to the upper and lower 10th percentiles of the data
-      #3. plot data, fit lines, x^1, x^1.5
+#       #tasks
+#       #1. get all data points for volume and surface area
+#       #2. fit lines to the upper and lower 10th percentiles of the data
+#       #3. plot data, fit lines, x^1, x^1.5
 
-      fig = plt.figure()
-      axs = [141,142,143,144]
+#       fig = plt.figure()
+#       axs = [141,142,143,144]
 
-      sa = [cell_instance.experiment.area(cell_instance.surface_area) for cell_instance in CellInstance.objects.all()]
-      min_sa = min(sa)
-      max_sa = max(sa)
+#       sa = [cell_instance.experiment.area(cell_instance.surface_area) for cell_instance in CellInstance.objects.all()]
+#       min_sa = min(sa)
+#       max_sa = max(sa)
 
-      v = [cell_instance.experiment.volume(cell_instance.volume) for cell_instance in CellInstance.objects.all()]
-      min_v = min(v)
-      max_v = max(v)
+#       v = [cell_instance.experiment.volume(cell_instance.volume) for cell_instance in CellInstance.objects.all()]
+#       min_v = min(v)
+#       max_v = max(v)
 
-      for region in Region.objects.all():
-        data = []
-        for cell_instance in region.cell_instances.all():
-          data.append(np.array([float(cell_instance.experiment.area(cell_instance.surface_area)), float(cell_instance.experiment.volume(cell_instance.volume)), float(cell_instance.experiment.area(cell_instance.surface_area))/float(cell_instance.experiment.volume(cell_instance.volume))]))
+#       for region in Region.objects.all():
+#         data = []
+#         for cell_instance in region.cell_instances.all():
+#           data.append(np.array([float(cell_instance.experiment.area(cell_instance.surface_area)), float(cell_instance.experiment.volume(cell_instance.volume)), float(cell_instance.experiment.area(cell_instance.surface_area))/float(cell_instance.experiment.volume(cell_instance.volume))]))
 
-        ax = fig.add_subplot(axs[region.index-1])
+#         ax = fig.add_subplot(axs[region.index-1])
 
-        #lines
-        gradients = np.array([d[2] for d in data])
-        p10 = np.percentile(gradients, 10)
-        p90 = np.percentile(gradients, 90)
-        data10 = filter(lambda k: k[2]<p10, data)
-        data90 = filter(lambda k: k[2]>p90, data)
+#         #lines
+#         gradients = np.array([d[2] for d in data])
+#         p10 = np.percentile(gradients, 10)
+#         p90 = np.percentile(gradients, 90)
+#         data10 = filter(lambda k: k[2]<p10, data)
+#         data90 = filter(lambda k: k[2]>p90, data)
 
-        m10 = np.linalg.lstsq(np.array([g[0] for g in data10])[:,np.newaxis], np.array([g[1] for g in data10]))[0][0]
-        m90 = np.linalg.lstsq(np.array([g[0] for g in data90])[:,np.newaxis], np.array([g[1] for g in data90]))[0][0]
+#         m10 = np.linalg.lstsq(np.array([g[0] for g in data10])[:,np.newaxis], np.array([g[1] for g in data10]))[0][0]
+#         m90 = np.linalg.lstsq(np.array([g[0] for g in data90])[:,np.newaxis], np.array([g[1] for g in data90]))[0][0]
 
-        x = np.linspace(0,max_sa,max_sa)
+#         x = np.linspace(0,max_sa,max_sa)
 
-        y10 = m10*x
-        y90 = m90*x
+#         y10 = m10*x
+#         y90 = m90*x
 
-        ax.plot(x, y10, label='10pc (m=%.2f)'%m10)
-        ax.plot(x, y90, label='90pc (m=%.2f)'%m90)
-        ax.plot(x, x**1, label='y=x')
-        ax.plot(x, x**1.5, label='y=x^1.5')
+#         ax.plot(x, y10, label='10pc (m=%.2f)'%m10)
+#         ax.plot(x, y90, label='90pc (m=%.2f)'%m90)
+#         ax.plot(x, x**1, label='y=x')
+#         ax.plot(x, x**1.5, label='y=x^1.5')
 
-        #ranges
-        ax.set_xlim([min_sa, max_sa])
-        ax.set_ylim([min_v, 20000])
+#         #ranges
+#         ax.set_xlim([min_sa, max_sa])
+#         ax.set_ylim([min_v, 20000])
 
-        #scatter
-        x = np.array([d[0] for d in data])
-        y = np.array([d[1] for d in data])
-        xy = np.vstack([x,y])
-        z = gaussian_kde(xy)(xy)
-        idx = z.argsort()
-        x, y, z = x[idx], y[idx], z[idx]
+#         #scatter
+#         x = np.array([d[0] for d in data])
+#         y = np.array([d[1] for d in data])
+#         xy = np.vstack([x,y])
+#         z = gaussian_kde(xy)(xy)
+#         idx = z.argsort()
+#         x, y, z = x[idx], y[idx], z[idx]
 
-        ax.scatter(x, y, c=z, s=50, edgecolor='')
+#         ax.scatter(x, y, c=z, s=50, edgecolor='')
 
-        ax.set_title('Region %d'%region.index)
-        if region.index==1:
-          plt.xlabel('Surface area (sq. microns)')
-          plt.ylabel('Volume (cubic microns)')
-        ax.legend()
+#         ax.set_title('Region %d'%region.index)
+#         if region.index==1:
+#           plt.xlabel('Surface area (sq. microns)')
+#           plt.ylabel('Volume (cubic microns)')
+#         ax.legend()
 
-      fig.suptitle('Surface area against volume in each region with bounding lines')
-      plt.show()
+#       fig.suptitle('Surface area against volume in each region with bounding lines')
+#       plt.show()
 ###
 
       '''
@@ -236,6 +238,106 @@ class Command(BaseCommand):
 #         ax.legend(loc='lower center')
 
 #       fig.suptitle('Surface area against volume in each region with bounding lines (log-log)')
+#       plt.show()
+###
+
+      '''
+      ### PLOT 3A-3: separate density plots
+
+      Description: Volume and surface area scatter plot
+      X: Surface area
+      Y: Volume
+      Resources: cell instance list for each region
+      Method: extract volume and surface area from each cell instance
+      Tasks:
+      1. for each region, get surface and volume of each cell instance
+      2. using combined arrays, get 90% and 10% of all data.
+      3. Fit lines for each group
+      4. display x^1, x^1.5, 10%, and 90%.
+
+      '''
+###
+#       #start with a rectangular Figure
+#       fig = plt.figure(1, figsize=(10,10))
+
+#       #min and max for axes
+#       sa = [cell_instance.experiment.area(cell_instance.surface_area) for cell_instance in CellInstance.objects.all()]
+#       min_sa = min(sa)
+#       max_sa = max(sa)
+
+#       v = [cell_instance.experiment.volume(cell_instance.volume) for cell_instance in CellInstance.objects.all()]
+#       min_v = min(v)
+#       max_v = max(v)
+
+#       #region
+#       region_index = 1
+#       region = Region.objects.get(index=region_index)
+#       data = []
+#       for cell_instance in region.cell_instances.all():
+#         data.append(np.array([float(cell_instance.experiment.area(cell_instance.surface_area)), float(cell_instance.experiment.volume(cell_instance.volume)), float(cell_instance.experiment.area(cell_instance.surface_area))/float(cell_instance.experiment.volume(cell_instance.volume))]))
+
+#       #definitions for the axes
+#       left, width = 0.1, 0.65
+#       bottom, height = 0.1, 0.65
+#       bottom_h = left_h = left+width+0.02
+
+#       rect_scatter = [left, bottom, width, height]
+#       rect_x_density = [left, bottom_h, width, 0.2]
+#       rect_y_density = [left_h, bottom, 0.2, height]
+
+#       #axes
+#       ax = plt.axes(rect_scatter)
+#       ax_x_density = plt.axes(rect_x_density)
+#       ax_y_density = plt.axes(rect_y_density)
+
+#       #lines
+#       gradients = np.array([d[2] for d in data])
+#       p10 = np.percentile(gradients, 10)
+#       p90 = np.percentile(gradients, 90)
+#       data10 = filter(lambda k: k[2]<p10, data)
+#       data90 = filter(lambda k: k[2]>p90, data)
+
+#       m10 = np.linalg.lstsq(np.array([g[0] for g in data10])[:,np.newaxis], np.array([g[1] for g in data10]))[0][0]
+#       m90 = np.linalg.lstsq(np.array([g[0] for g in data90])[:,np.newaxis], np.array([g[1] for g in data90]))[0][0]
+
+#       x = np.linspace(0,max_sa,max_sa)
+
+#       y10 = m10*x
+#       y90 = m90*x
+
+#       ax.plot(x, y10, label='10pc (m=%.2f)'%m10)
+#       ax.plot(x, y90, label='90pc (m=%.2f)'%m90)
+#       ax.plot(x, x**1, label='y=x')
+#       ax.plot(x, x**1.5, label='y=x^1.5')
+
+#       #ranges
+#       ax.set_xlim([min_sa, max_sa])
+#       ax.set_ylim([min_v, 20000])
+#       ax_x_density.set_xlim([min_sa, max_sa])
+#       ax_y_density.set_ylim([min_v, 20000])
+
+#       #scatter
+#       x = np.array([d[0] for d in data])
+#       y = np.array([d[1] for d in data])
+
+#       ax.scatter(x, y)
+
+#       #histograms
+#       x_binwidth = 100
+#       y_binwidth = 500
+
+#       ax_x_density.xaxis.set_major_formatter(nullfmt)
+#       ax_y_density.yaxis.set_major_formatter(nullfmt)
+
+#       x_bins = np.arange(min_sa, max_sa+x_binwidth, x_binwidth)
+#       y_bins = np.arange(min_v, 20000+y_binwidth, y_binwidth)
+
+#       ax_x_density.hist(x, bins=x_bins)
+#       ax_y_density.hist(y, bins=y_bins, orientation='horizontal')
+
+#       ax.set_xlabel(r'Segmented mask area ($\mu^2$)')
+#       ax.set_ylabel(r'GFP volume ($\mu^3$)')
+
 #       plt.show()
 ###
 
