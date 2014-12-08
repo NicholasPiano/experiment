@@ -8,9 +8,12 @@ from apps.cell.models import CellInstance
 #util
 import os
 from scipy.misc import imsave, imread
+from scipy.signal import gaussian
+from scipy.ndimage.morphology import binary_dilation as dilate
+from scipy.ndimage.morphology import distance_transform_edt as distance
 import numpy as np
-from skimage import filter as ft
-from skimage import exposure as ex
+from skimage import filter, feature, exposure
+import math
 
 #command
 class Command(BaseCommand):
@@ -44,30 +47,104 @@ class Command(BaseCommand):
       bf = []
       for image in bf_image_set:
         image.load()
-        bf.append(ex.equalize_hist(image.array))
+        bf.append(exposure.equalize_hist(image.array))
 
-      gfp = []
-      for image in gfp_image_set:
-        image.load()
-        gfp.append(ex.equalize_hist(image.array))
+#       gfp = []
+#       for image in gfp_image_set:
+#         image.load()
+#         gfp.append(exposure.equalize_hist(image.array))
 
       #2. get all masks and composite
-      masks = []
-      for cell_instance in cell_instances_all:
+      combined_masks = np.zeros(bf[0].shape)
+      for cell_instance in cell_instances_filter:
+        #get outline
         mask = cell_instance.mask_array()
-        masks.append(mask)
+        dilated = np.array(dilate(mask), dtype=int)*255
+        outline = np.array(dilated - mask)
 
-      composite_path = os.path.join(output_path, 'composite.tiff')
-      composite = make_composite(composite_path) if not os.path.exists(composite_path) else imread(composite_path)
+        #position outline in source image
+        y,x = np.unravel_index(distance(mask).argmax(), mask.shape)
+        rows, columns = mask.shape[0], mask.shape[1]
+        pos_x, pos_y = cell_instance.position_x, cell_instance.position_y
+
+        field = np.zeros(bf[0].shape)
+
+        row0 = pos_y - y
+        row0_difference = 0
+        if row0<0:
+          row0_difference = -row0
+          row0 = 0
+
+        row1 = pos_y - y + rows
+        row1_difference = mask.shape[0]
+        if row1>=field.shape[0]:
+          row1_difference = mask.shape[0] + field.shape[0] - row1
+          row1 = field.shape[0]
+
+        column0 = pos_x - x
+        column0_difference = 0
+        if column0<0:
+          column0_difference = -column0
+          column0 = 0
+
+        column1 = pos_x - x + columns
+        column1_difference = mask.shape[1]
+        if column1>=field.shape[1]:
+          column1_difference = mask.shape[1] + field.shape[1] - column1
+          column1 = field.shape[1]
+
+        field[row0:row1,column0:column1] = outline[row0_difference:row1_difference, column0_difference:column1_difference]
+
+        combined_masks += field
+
+      imsave(os.path.join(output_path, 'combined.tiff'), combined_masks)
+
+
+#       composite_path = os.path.join(output_path, 'composite.tiff')
+#       composite = make_composite(composite_path) if not os.path.exists(composite_path) else imread(composite_path)
 
       #3. run canny over each brightfield image
-      bf_canny = []
-      for i, image in enumerate(bf):
-        edges = ft.canny(image, sigma=3)
-        imsave(os.path.join(output_path, 'image_%d.tiff'%i), edges)
-        bf_canny.append(edges)
+###
+#       bf_canny = []
+#       for i, image in enumerate(bf):
+#         sigma = 3
+#         edges =filter.canny(image, sigma=sigma)
+#         imsave(os.path.join(output_path, 'edge', 'canny_%d_%d.tiff'%(sigma, i)), edges)
+#         bf_canny.append(edges)
+###
 
-      #4.
+      #4. add canny images and cut below max -> only edges that stay
+###
+#       canny_composite = []
+#       gaussian_window = gaussian(len(bf_canny)*2, 1)
+#       gaussian_window = gaussian_window[gaussian_window.argmax():]
+#       for i, ci in enumerate(bf_canny):
+#         canny_composite_i = np.zeros(bf_canny[0].shape)
+#         for j, cj in enumerate(bf_canny):
+#           c = np.array(cj)
+#           c[c>0] = 1
+#           canny_composite_i += c*gaussian_window[abs(i-j)]
+#         canny_composite_i[combined_masks==255] = canny_composite_i.max()+20
+#         imsave(os.path.join(output_path, 'canny_composite', 'image_%d.tiff'%i), canny_composite_i)
+#         canny_composite.append(canny_composite_i)
+###
+
+      #5. find blobs with size comparable to size of composite
+###
+#       #- find blob radius
+#       composite_blob = np.zeros(composite.shape)
+#       composite_blob[composite>composite.mean()] = 1
+#       min_blob_radius = math.sqrt(float(composite_blob.sum())/float(4*math.pi))
+#       max_blob_radius = math.sqrt(float(composite_blob.shape[0]*composite_blob.shape[1])/float(4*math.pi))
+
+#       #- find blobs in image
+#       bf_blobs = []
+#       for i, image in enumerate(bf):
+#         blobs = feature.blob_log(image)
+#         bf_blobs.append(blobs)
+###
+
+
 
 
 def make_composite(composite_path):
