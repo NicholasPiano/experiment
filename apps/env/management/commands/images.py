@@ -25,5 +25,20 @@ class Command(BaseCommand):
       #load brightfield and gfp for cell instance 747
       cell_instance = CellInstance.objects.get(pk=747)
 
+      #images details
       experiment_name = cell_instance.experiment.name
-      print(experiment_name)
+
+
+      #get brightfield
+      #get gfp
+      #get mask
+
+      ### IMAGES
+      #1. brightfield solo
+      #2. gfp solo
+      #3. mask outline+bf
+      #4. mask outline+gfp
+      #5. white mask
+      #6. signal from edge of mask
+
+
