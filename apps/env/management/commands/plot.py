@@ -33,22 +33,50 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
       '''
-      PLOT 5: Protrusion length vs region
+      PLOT 7: Velocity vs distance from barrier
 
       '''
+      #for each experiment, get the x values of the cells when they first enter region 2
+      #take the average
+      #use the result as the x value of the barrier
+      #use for all cells in the experiment
 
-      data = []
+      experiment_barrier_location_dict = {}
+
+      for experiment in Experiment.objects.all():
+       for series in experiment.series.all():
+         barrier_x_total = 0
+         count = 0
+         #get all cells
+         for cell in series.cells.all():
+           if cell.barrier_crossing_timestep!=-1:
+             count += 1
+             barrier_x_total += cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x
+
+         if count!=0:
+           experiment_barrier_location_dict[experiment.name+str(series.index)] = int(float(barrier_x_total)/float(count))
+
+      #plots
+      colours = ['blue','red','green','yellow']
+      plots = []
       for region in Region.objects.all():
-        region_data = []
-        for extension in region.extensions.all():
-          region_data.append(float(extension.length*extension.cell.experiment.x_microns_over_pixels))
-        data.append(region_data)
+       data = ([],[])
+       for cell_instance in region.cell_instances.all():
+         key = cell_instance.experiment.name+str(cell_instance.series.index)
+         if key in experiment_barrier_location_dict.keys():
+           data[0].append((experiment_barrier_location_dict[key] - cell_instance.position_x)*cell_instance.experiment.x_microns_over_pixels)
+           data[1].append(np.linalg.norm(cell_instance.velocity()*cell_instance.experiment.microns_over_pixels()/cell_instance.experiment.time_per_frame*60)) #microns per minute
+       plots.append(data)
 
-      plt.boxplot(data)
+      for i, plot in enumerate(plots):
+       plt.scatter(plot[0], plot[1], c=colours[i], label='region %d'%(i+1))
 
-      plt.title('Comparison of cell extension length in each region')
-      plt.ylabel('Extension length   ')
-      plt.xlabel('Region')
+      plt.gca().yaxis.set_major_locator(MaxNLocator(prune='lower'))
+      plt.legend()
+
+      plt.title('Cell protrusion length vs. distance from barrier')
+      plt.xlabel('Distance from barrier  ') #microns
+      plt.ylabel('Cell velocity ') #microns per minute
 
       plt.show()
 
