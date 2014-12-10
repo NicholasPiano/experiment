@@ -33,32 +33,24 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
       '''
-      PLOT 1: Barrier: brightfield and gfp
-      Just print out GFP superimposed on the brightfield
+      PLOT 5: Protrusion length vs region
 
       '''
-      #load brightfield and gfp for cell instance 747
-      cell_instance = CellInstance.objects.get(pk=747)
 
-      #images details
-      experiment_name = cell_instance.experiment.name
-      series_index = cell_instance.series.index
-      timestep_index = cell_instance.timestep.index
-      focus = cell_instance.position_z
+      data = []
+      for region in Region.objects.all():
+        region_data = []
+        for extension in region.extensions.all():
+          region_data.append(float(extension.length*extension.cell.experiment.x_microns_over_pixels))
+        data.append(region_data)
 
-      #get brightfield and gfp
-      brightfield_set = SourceImage.objects.filter(experiment__name=experiment_name, series__index=series_index, timestep__index=timestep_index, channel=0)
-      gfp_set = SourceImage.objects.filter(experiment__name=experiment_name, series__index=series_index, timestep__index=timestep_index, channel=1)
+      plt.boxplot(data)
 
-      output_path = os.path.join('/','Volumes','transport','data','confocal','ppt')
+      plt.title('Comparison of cell extension length in each region')
+      plt.ylabel('Extension length   ')
+      plt.xlabel('Region')
 
-      for image in brightfield_set:
-        image.load()
-        imsave(os.path.join(output_path, '747', 'bf', image.file_name), image.array)
-
-      for image in gfp_set:
-        image.load()
-        imsave(os.path.join(output_path, '747', 'gfp', image.file_name), image.array)
+      plt.show()
 
 
 
