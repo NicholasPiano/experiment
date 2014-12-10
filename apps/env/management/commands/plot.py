@@ -65,7 +65,7 @@ class Command(BaseCommand):
          key = cell_instance.experiment.name+str(cell_instance.series.index)
          if key in experiment_barrier_location_dict.keys():
            data[0].append((experiment_barrier_location_dict[key] - cell_instance.position_x)*cell_instance.experiment.x_microns_over_pixels)
-           data[1].append(np.linalg.norm(cell_instance.velocity()*cell_instance.experiment.microns_over_pixels()/cell_instance.experiment.time_per_frame*60)) #microns per minute
+           data[1].append(cell_instance.max_extension_length*cell_instance.experiment.x_microns_over_pixels)
        plots.append(data)
 
       for i, plot in enumerate(plots):
@@ -76,7 +76,7 @@ class Command(BaseCommand):
 
       plt.title('Cell protrusion length vs. distance from barrier')
       plt.xlabel('Distance from barrier  ') #microns
-      plt.ylabel('Cell velocity ') #microns per minute
+      plt.ylabel('Cell protrusion length ') #microns per minute
 
       plt.show()
 
