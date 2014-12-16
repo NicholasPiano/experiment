@@ -35,51 +35,31 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
       '''
-      PLOT 2b: Velocity against distance from barrier
+      PLOT 3: Protrusion length vs angle
       '''
-      #for each experiment, get the x values of the cells when they first enter region 2
-      #take the average
-      #use the result as the x value of the barrier
-      #use for all cells in the experiment
 
-      ### data
-      min_length = 0
-      max_length = 0
-
-      experiment_barrier_location_dict = {}
-
-      for experiment in Experiment.objects.all():
-       for series in experiment.series.all():
-         barrier_x_total = 0
-         count = 0
-         #get all cells
-         for cell in series.cells.all():
-           if cell.barrier_crossing_timestep!=-1:
-             count += 1
-             barrier_x_total += cell.cell_instances.get(timestep__index=cell.barrier_crossing_timestep).position_x
-
-         if count!=0:
-           experiment_barrier_location_dict[experiment.name+str(series.index)] = int(float(barrier_x_total)/float(count))
-
+      #start with a rectangular Figure
       colours = ['blue','red','green','yellow']
-      plots = []
-      for region in Region.objects.all():
-       data = ([],[])
-       for cell_instance in region.cell_instances.all():
-         key = cell_instance.experiment.name+str(cell_instance.series.index)
-         if key in experiment_barrier_location_dict.keys():
-           velocity = float(cell_instance.max_extension_length*cell_instance.experiment.x_microns_over_pixels)
-           if velocity < 100:
-             max_length = velocity if velocity > max_length else max_length
-             data[0].append((experiment_barrier_location_dict[key] - cell_instance.position_x)*cell_instance.experiment.x_microns_over_pixels)
-             data[1].append(velocity) #microns per minute
-       plots.append(data)
-
-      ### plots
-
-      #fig and rects
       fig = plt.figure(1, figsize=(10,10))
 
+      #min and max for axes
+      length = [extension.length for extension in Extension.objects.all()]
+      max_length = 80
+      min_length = 0
+
+      #region
+      corrections = {'050714':(1, math.pi/2.0),
+                     '190714':(-1, math.pi),
+                     '260714':(1, math.pi),}
+
+      region_index = 1
+      region = Region.objects.get(index=region_index)
+      data = []
+      for extension in region.extensions.all():
+        c = corrections[extension.cell.experiment.name]
+        data.append((extension.length*extension.cell.experiment.x_microns_over_pixels, (float(c[0])*float(extension.angle) + float(c[1]))*float(180.0/math.pi)))
+
+      #definitions for the axes
       left, width = 0.1, 0.65
       bottom, height = 0.1, 0.65
       bottom_h = left_h = left+width+0.02
@@ -93,38 +73,38 @@ class Command(BaseCommand):
       ax_x_density = plt.axes(rect_x_density)
       ax_y_density = plt.axes(rect_y_density)
 
+      #scatter
+      y = np.array([d[0] for d in data])
+      x = np.array([d[1] for d in data])
+
+      x[x>180] -= 360
+      x[x<-180] += 360
+
+      ax.set_ylim([float(min_length), float(max_length)])
+      ax.set_xlim([-180,180])
+      ax.set_xticks(np.arange(-180,180,45))
+      ax.plot([90,90],[0,100], '-', c='red', alpha=0.7)
+      ax.plot([0,0],[0,100], '-', c='red', alpha=0.7)
+      ax.plot([-90,-90],[0,100], '-', c='red', alpha=0.7)
+      ax.scatter(x, y, c=colours[region_index-1])
+
+      #histograms
+      x_binwidth = 10
+      y_binwidth = 5
+
       ax_x_density.xaxis.set_major_formatter(nullfmt)
       ax_y_density.yaxis.set_major_formatter(nullfmt)
 
-      x_binwidth = 8
-      y_binwidth = 5
+      x_bins = np.arange(-180, 180+x_binwidth, x_binwidth)
+      y_bins = np.arange(float(min_length), float(max_length)+y_binwidth, y_binwidth)
 
-      #plot
-      for i, plot in enumerate(plots):
-        x,y = plot[0],plot[1]
+      ax_x_density.hist(x, bins=x_bins, facecolor=colours[region_index-1], normed=True)
+      ax_x_density.set_yticks(np.arange(0,0.007, 0.002))
+      ax_x_density.set_xlim([-180,180])
+      ax_y_density.hist(y, bins=y_bins, facecolor=colours[region_index-1], normed=True, orientation='horizontal')
+      ax_y_density.set_xticks(np.arange(0,0.05, 0.01))
 
-        #scatter
-        ax.scatter(x, y, c=colours[i], label='region %d'%(i+1), alpha=0.5)
-
-        #histograms
-        x_bins = np.arange(-180, 180+x_binwidth, x_binwidth)
-        y_bins = np.arange(float(min_length), float(max_length)+y_binwidth, y_binwidth)
-
-        ax_x_density.hist(x, bins=x_bins, facecolor=colours[i], normed=True, alpha=0.5)
-        ax_y_density.hist(y, bins=y_bins, orientation='horizontal', facecolor=colours[i], normed=True, alpha=0.5)
-
-      ax.legend()
-
-      ax.set_xlabel('Distance from barrier ($\mu m$)') #microns
-      ax.set_ylabel('Cell protrusion length ($\mu m$)') #microns
-#       ax.set_ylim([0,1.6])
-      ax.set_xlim([-200,200])
-      ax.set_ylim([0,100])
-#       ax_y_density.set_ylim([0,1.6])
-      ax_y_density.set_xticks(np.arange(0, 0.05, 0.01))
-      ax_y_density.set_ylim([0,100])
-      ax_x_density.set_xlim([-200,200])
-      ax_x_density.set_yticks(np.arange(0, 0.08, 0.02))
+      ax.set_xlabel(r'Angle from barrier (degrees)')
+      ax.set_ylabel(r'Extension length ($\mu m$)')
 
       plt.show()
-
