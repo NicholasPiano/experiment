@@ -68,8 +68,8 @@ class Command(BaseCommand):
        for cell_instance in region.cell_instances.all():
          key = cell_instance.experiment.name+str(cell_instance.series.index)
          if key in experiment_barrier_location_dict.keys():
-           velocity = np.linalg.norm(cell_instance.velocity()*cell_instance.experiment.microns_over_pixels()/cell_instance.experiment.time_per_frame*60)
-           if velocity < 1.6:
+           velocity = float(cell_instance.max_extension_length*cell_instance.experiment.x_microns_over_pixels)
+           if velocity < 100:
              max_length = velocity if velocity > max_length else max_length
              data[0].append((experiment_barrier_location_dict[key] - cell_instance.position_x)*cell_instance.experiment.x_microns_over_pixels)
              data[1].append(velocity) #microns per minute
@@ -97,7 +97,7 @@ class Command(BaseCommand):
       ax_y_density.yaxis.set_major_formatter(nullfmt)
 
       x_binwidth = 8
-      y_binwidth = 0.05
+      y_binwidth = 5
 
       #plot
       for i, plot in enumerate(plots):
@@ -116,10 +116,13 @@ class Command(BaseCommand):
       ax.legend()
 
       ax.set_xlabel('Distance from barrier ($\mu m$)') #microns
-      ax.set_ylabel('Cell velocity ($\mu m$/minute)') #microns per minute
-      ax.set_ylim([0,1.6])
+      ax.set_ylabel('Cell protrusion length ($\mu m$)') #microns
+#       ax.set_ylim([0,1.6])
       ax.set_xlim([-200,200])
-      ax_y_density.set_ylim([0,1.6])
+      ax.set_ylim([0,100])
+#       ax_y_density.set_ylim([0,1.6])
+      ax_y_density.set_xticks(np.arange(0, 0.05, 0.01))
+      ax_y_density.set_ylim([0,100])
       ax_x_density.set_xlim([-200,200])
       ax_x_density.set_yticks(np.arange(0, 0.08, 0.02))
 
