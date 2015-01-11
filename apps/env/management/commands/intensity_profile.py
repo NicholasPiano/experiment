@@ -31,9 +31,15 @@ nullfmt   = NullFormatter()
 # matplotlib.rc('font', **font)
 
 class Command(BaseCommand):
-  args = '<none>'
-  help = ''
+    args = '<none>'
+    help = ''
 
-  def handle(self, *args, **options):
+    def handle(self, *args, **options):
+      '''
 
+      Find a suitable cell instance and plot the intensity levels over one dimension. Things to plot:
+      1. each z of brightfield
+      2. each z of gfp
+
+      '''
 
