@@ -45,10 +45,10 @@ class Command(BaseCommand):
 
       ### 2C
 
-      r1 = [float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels) for extension in Extension.objects.filter(region__index=1)]
-      r2 = [float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels) for extension in Extension.objects.filter(region__index=2)]
-      r3 = [float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels) for extension in Extension.objects.filter(region__index=3)]
-      r4 = [float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels) for extension in Extension.objects.filter(region__index=4)]
+#       r1 = [float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels) for extension in Extension.objects.filter(region__index=1)]
+#       r2 = [float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels) for extension in Extension.objects.filter(region__index=2)]
+#       r3 = [float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels) for extension in Extension.objects.filter(region__index=3)]
+#       r4 = [float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels) for extension in Extension.objects.filter(region__index=4)]
 
 #       max_l = max(r1+r2+r3+r4)
 
@@ -59,7 +59,6 @@ class Command(BaseCommand):
 #       ax2 = fig.add_subplot(412, sharex=ax4)
 #       ax3 = fig.add_subplot(413, sharex=ax4)
 
-
 #       bin_width = 2
 #       bins = np.arange(0, max_l+bin_width, bin_width)
 
@@ -67,6 +66,16 @@ class Command(BaseCommand):
 #       ax2.hist(r2, bins=bins, facecolor=colours[1], normed=True)
 #       ax3.hist(r3, bins=bins, facecolor=colours[2], normed=True)
 #       ax4.hist(r4, bins=bins, facecolor=colours[3], normed=True)
+
+#       ax1.set_ylim([0,0.05])
+#       ax2.set_ylim([0,0.05])
+#       ax3.set_ylim([0,0.05])
+#       ax4.set_ylim([0,0.05])
+
+#       ax1.yaxis.set_ticks([0.05])
+#       ax2.yaxis.set_ticks([0.05])
+#       ax3.yaxis.set_ticks([0.05])
+#       ax4.yaxis.set_ticks([0.05])
 
 #       plt.setp(ax1.get_xticklabels(), visible=False)
 #       plt.setp(ax2.get_xticklabels(), visible=False)
@@ -84,7 +93,7 @@ class Command(BaseCommand):
 #       r3 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=3)]
 #       r4 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=4)]
 
-      #mean
+#       #mean
 #       m1,m2,m3,m4 = tuple([np.mean(r) for r in [r1,r2,r3,r4]])
 #       print((m1,m2,m3,m4))
 
@@ -101,6 +110,15 @@ class Command(BaseCommand):
 #       ax3 = fig.add_subplot(413, sharex=ax4)
 #       ax3.set_xlim([0,30])
 
+#       ax1.set_ylim([0,0.3])
+#       ax2.set_ylim([0,0.3])
+#       ax3.set_ylim([0,0.3])
+#       ax4.set_ylim([0,0.3])
+
+#       ax1.yaxis.set_ticks([0.3])
+#       ax2.yaxis.set_ticks([0.3])
+#       ax3.yaxis.set_ticks([0.3])
+#       ax4.yaxis.set_ticks([0.3])
 
 #       bin_width = 0.6
 #       bins = np.arange(0, max_l+bin_width, bin_width)
