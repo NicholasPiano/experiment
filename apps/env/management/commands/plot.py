@@ -80,5 +80,24 @@ class Command(BaseCommand):
 
       count+=1
 
-    plt.plot(x, [e.d for e in sorted_data])
+    peak_array = np.array([e.a for e in sorted_data])
+    argmax = np.argmax(peak_array)
+    sorted_data2 = np.roll(sorted_data, -argmax)
+
+    final = list(sorted_data2[6:]) + list([sorted_data2[0]])
+
+    x = [e.a*180.0/math.pi for e in final]
+    y = [e.d*float(cell_instance.cell.experiment.x_microns_over_pixels) for e in final]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    ax.plot(x,y)
+
+    ax.xaxis.set_ticks([-180,-135,-90,-45,0,45,90,135,180])
+
+    plt.xlabel(r'Angle, $\theta$ (degrees)')
+    plt.ylabel('Distance from centre of cell ($\mu m$)')
+    plt.title('Cell instance perimetre signal')
+
     plt.show()
