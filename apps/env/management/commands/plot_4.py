@@ -123,6 +123,5 @@ class Command(BaseCommand):
 
       ax.set_xlabel(r'Segmented mask area ($\mu m^2$)')
       ax.set_ylabel(r'GFP volume ($\mu m^3$)')
-      ax.legend(loc='upper left')
 
       plt.show()

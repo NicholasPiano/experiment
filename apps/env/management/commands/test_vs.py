@@ -20,23 +20,6 @@ class Command(BaseCommand):
     help = ''
 
     def handle(self, *args, **options):
-      #get cell_instance details
-#       experiment_name = '050714'
-#       series_index = 14
-#       cell_index = 1
-#       timestep_index = 11
+      cell_instance = CellInstance.objects.get(pk=747)
 
-#       cell_instance = CellInstance.objects.get(experiment__name=experiment_name, series__index=series_index, cell__index=cell_index, timestep__index=timestep_index)
-#       print([cell_instance.volume, cell_instance.surface_area])
-#       cell_instance.position_volume_surface_area()
-      total = CellInstance.objects.count()
-      for cell_instance in CellInstance.objects.all():
-        self.stdout.write('%d of %d: %s %d %d %d'%(cell_instance.pk, total, cell_instance.experiment.name, cell_instance.series.index, cell_instance.cell.index, cell_instance.timestep.index))
-        cell_instance.surface_area = cell_instance.mask_array().sum()/100
-        cell_instance.save()
 
-        self.stdout.write('volume: %d, surface_area: %d'%(int(cell_instance.volume), int(cell_instance.surface_area)))
-
-#error: raise CommandError('Poll "%s" does not exist' % poll_id)
-#write to terminal: self.stdout.write('Successfully closed poll "%s"' % poll_id)
-#self.stdout.write("Unterminated line", ending='')
