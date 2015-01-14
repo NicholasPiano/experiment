@@ -5,6 +5,7 @@
 #local
 
 #util
+import os
 import numpy as np
 from scipy.ndimage.filters import convolve
 
@@ -83,3 +84,9 @@ def cartesian(arrays, out=None):
         for j in xrange(1, arrays[0].size):
             out[j*m:(j+1)*m,1:] = out[0:m,1:]
     return out
+
+def array_to_vmd_xyz(array, path, filename):
+  ''' For each element of the array, print out its coordinates and its value to a file. '''
+
+  with open(os.path.join(path, filename)) as xyz_file:
+

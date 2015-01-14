@@ -6,7 +6,7 @@ from django.db import models
 #local
 from apps.env.models import Region, Experiment, Series, Timestep
 from apps.image.util.life.life import Life
-from apps.image.util.life.rule import CoagulationsFillInVote
+from apps.image.util.life.rule import *
 from apps.image.util.tools import get_surface_elements
 
 #util
@@ -317,6 +317,74 @@ class CellInstance(models.Model):
     image = self.image.get()
     image.load()
     return image.array
+
+  def reconstruction_3D(self, ones=False):
+    #1. resources
+    #- mask
+    mask = np.array(np.invert(self.mask_array()), dtype=bool)
+
+    #- bounding box
+    bounding_box = self.cell.bounding_box.get()
+
+    #- focus image set
+    focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
+
+    #2. first loop:
+    #- load images
+    #- cut to bounding box
+    #- mask with segmented image
+    #- get mean list
+    mean_list = []
+    array_3D = []
+    for focus_image in focus_image_set.order_by('focus'):
+      #load
+      focus_image.load()
+      #cut
+      cut_image = bounding_box.cut(focus_image.array)
+      #mask
+      focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
+      #mean
+      mean_list.append(focus_image.array.mean()) # <<< mean list
+      focus_image.mean = focus_image.array.mean()
+      focus_image.save()
+      #3D
+      array_3D.append(focus_image.array.filled())
+      focus_image.unload()
+
+    global_mean = np.sum(mean_list)/float(len(mean_list))
+    array_3D = np.array(array_3D)
+
+    #3. second loop
+    #- threshold
+    array_3D_binary = np.zeros(array_3D.shape)
+    array_3D_binary[array_3D>global_mean] = 1
+
+    #- run life
+    for i in range(array_3D.shape[0]):
+      array_binary = array_3D_binary[i]
+
+      life = Life(array_binary)
+      life.ruleset = CoagulationsFillInVote()
+      life.ruleset.timestamps = [2,4,4]
+      life.update_cycle()
+
+      array_3D_binary[i] = life.array
+
+    #5. mask 3D array
+    array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
+    array_3D_masked = array_3D_masked.filled()
+
+    #6. set all nonzero to one
+    if ones:
+      array_3D_masked[array_3D_masked>0] = 1
+
+    #7. insert mask outline into top and bottom layers of 3D array
+
+
+    return array_3D_masked
+
+  def reconstruction_mask_outline(self, top_and_bottom=False):
+    ''' Basically the same as the 3D reconstruction '''
 
 ### BoundingBox
 class BoundingBox(models.Model):
