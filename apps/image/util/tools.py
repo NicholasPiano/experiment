@@ -106,12 +106,12 @@ def array_to_vmd_xyz(array, path, filename): #expects 3D array
 def array_to_matlab_script(array, path, filename):
   pass
 
-def get_bins(data):
+def get_bins(data, mod=2):
   #get interquartile range
   q75, q25 = np.percentile(data, [75,25])
   iqr = q75 - q25
 
   #number of bins
-  data_range = 360
-  n_bins = data_range*(len(data)**(1/3.0))/(iqr)
+  data_range = np.max(data)-np.min(data)
+  n_bins = data_range*(len(data)**(1/3.0))/(iqr*mod)
   return n_bins

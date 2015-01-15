@@ -129,7 +129,7 @@ class CellInstance(models.Model):
   velocity_z = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
 
   def velocity(self, factor=1):
-    return factor*np.array([self.velocity_x, self.velocity_y, self.velocity_z], dtype=int)
+    return factor*np.array([self.velocity_x, self.velocity_y], dtype=int)
 
   displacement_x = models.IntegerField(default=0)
   displacement_y = models.IntegerField(default=0)
@@ -367,6 +367,8 @@ class CellInstance(models.Model):
       life.ruleset = CoagulationsFillInVote()
       life.ruleset.timestamps = [2,4,4]
       life.update_cycle()
+      if i<self.position_z-5 or i>self.position_z+5:
+        life.update_cycle() #again
 
       array_3D_binary[i] = life.array
 

@@ -9,7 +9,7 @@ from apps.cell.models import CellInstance, Cell, Extension
 from apps.env.models import Region, Experiment
 from apps.image.util.life.life import Life
 from apps.image.util.life.rule import CoagulationsFillInVote
-from apps.image.util.tools import get_surface_elements
+from apps.image.util.tools import get_surface_elements, get_bins
 
 #util
 import matplotlib
@@ -40,6 +40,11 @@ class Command(BaseCommand):
 
       '''
 
+      def count_histogram(data):
+        hist, bins = np.histogram(data, bins=get_bins(data, mod=0.5))
+        hist = np.array(hist, dtype=float)/np.sum(hist) #all bar heights add up to one
+        return (hist, bins)
+
       #start with a rectangular Figure
       colours = ['blue','red','green','yellow']
       fig = plt.figure(1, figsize=(10,10))
@@ -54,7 +59,7 @@ class Command(BaseCommand):
       max_v = 15000
 
       #region
-      region_index = 1
+      region_index = 4
       region = Region.objects.get(index=region_index)
       data = []
       for cell_instance in region.cell_instances.all():
@@ -109,17 +114,19 @@ class Command(BaseCommand):
       ax.scatter(x, y, c=colours[region_index-1])
 
       #histograms
-      x_binwidth = 100
-      y_binwidth = 500
-
       ax_x_density.xaxis.set_major_formatter(nullfmt)
       ax_y_density.yaxis.set_major_formatter(nullfmt)
 
-      x_bins = np.arange(min_sa, max_sa+x_binwidth, x_binwidth)
-      y_bins = np.arange(min_v, 20000+y_binwidth, y_binwidth)
+      x_hist, x_bins = count_histogram(x)
+      y_hist, y_bins = count_histogram(y)
 
-      ax_x_density.hist(x, bins=x_bins, normed=True, facecolor=colours[region_index-1])
-      ax_y_density.hist(y, bins=y_bins, normed=True, facecolor=colours[region_index-1], orientation='horizontal')
+      ax_x_density.bar(x_bins[:-1], x_hist, width=np.diff(x_bins), facecolor=colours[region_index-1])
+      ax_y_density.barh(y_bins[:-1], y_hist, height=np.diff(y_bins), facecolor=colours[region_index-1])
+
+#       ax_x_density.set_ylim([0,0.007])
+#       ax_y_density.set_xlim([])
+#       ax_x_density.yaxis.set_ticks([0.007])
+#       ax_y_density.xaxis.set_ticks([0.007])
 
       ax.set_xlabel(r'Segmented mask area ($\mu m^2$)')
       ax.set_ylabel(r'GFP volume ($\mu m^3$)')

@@ -41,6 +41,11 @@ class Command(BaseCommand):
 
       colours = ['blue','red','green','yellow']
 
+      def count_histogram(data):
+        hist, bins = np.histogram(data, bins=get_bins(data, mod=0.5))
+        hist = np.array(hist, dtype=float)/np.sum(hist) #all bar heights add up to one
+        return (hist, bins)
+
       r1 = [float(extension.angle)*180.0/math.pi for extension in Extension.objects.filter(region__index=1)]
       r2 = [float(extension.angle)*180.0/math.pi for extension in Extension.objects.filter(region__index=2)]
       r3 = [float(extension.angle)*180.0/math.pi for extension in Extension.objects.filter(region__index=3)]
@@ -54,23 +59,30 @@ class Command(BaseCommand):
       ax2 = fig.add_subplot(412, sharex=ax4)
       ax3 = fig.add_subplot(413, sharex=ax4)
 
-      ax1.hist(r1, bins=get_bins(r1), facecolor=colours[0], normed=True)
-      ax2.hist(r2, bins=get_bins(r2), facecolor=colours[1], normed=True)
-      ax3.hist(r3, bins=get_bins(r3), facecolor=colours[2], normed=True)
-      ax4.hist(r4, bins=get_bins(r4), facecolor=colours[3], normed=True)
+      hist1, bins1 = count_histogram(r1)
+      hist2, bins2 = count_histogram(r2)
+      hist3, bins3 = count_histogram(r3)
+      hist4, bins4 = count_histogram(r4)
 
-      ax1.set_ylim([0,0.007])
-      ax2.set_ylim([0,0.007])
-      ax3.set_ylim([0,0.007])
-      ax4.set_ylim([0,0.007])
+      ax1.bar(bins1[:-1], hist1, width=np.diff(bins1), facecolor=colours[0])
+      ax2.bar(bins2[:-1], hist2, width=np.diff(bins2), facecolor=colours[1])
+      ax3.bar(bins3[:-1], hist3, width=np.diff(bins3), facecolor=colours[2])
+      ax4.bar(bins4[:-1], hist4, width=np.diff(bins4), facecolor=colours[3])
 
-      ax1.yaxis.set_ticks([0.007])
-      ax2.yaxis.set_ticks([0.007])
-      ax3.yaxis.set_ticks([0.007])
-      ax4.yaxis.set_ticks([0.007])
+      plot_max = 0.10
+
+      ax1.set_ylim([0,plot_max])
+      ax2.set_ylim([0,plot_max])
+      ax3.set_ylim([0,plot_max])
+      ax4.set_ylim([0,plot_max])
+
+      ax1.yaxis.set_ticks([plot_max])
+      ax2.yaxis.set_ticks([plot_max])
+      ax3.yaxis.set_ticks([plot_max])
+      ax4.yaxis.set_ticks([plot_max])
 
       #lines
-      y = [0,0.007]
+      y = [0,plot_max]
       x1 = [-90,-90]
       x2 = [0,0]
       x3 = [90,90]

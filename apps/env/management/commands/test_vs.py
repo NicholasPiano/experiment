@@ -22,25 +22,12 @@ class Command(BaseCommand):
     help = ''
 
     def handle(self, *args, **options):
-      cell_instance = CellInstance.objects.get(pk=747)
-      pks = [191,232,574,747] #region 4,3,2,1
 
-      #1. get outline of mask
+      cell_instances = sorted(CellInstance.objects.all(), key=lambda x: sum([float(extension.length) for extension in x.extensions.all()]))
 
-      #2. get gfp model
-      model = cell_instance.reconstruction_3D()
+      cell_instance = cell_instances[100]
 
-      array_to_vmd_xyz(model, settings.PLOT_DIR, '%d.xyz'%(cell_instance.pk))
-#       z,x,y = model.nonzero()
+      mask = cell_instance.mask_array()
+#       model = cell_instance.reconstruction_3D()
 
-      #3. put in array with sphere of radius 14 microns
-
-      #4. print out image series to a set of images.
-
-      #3D reconstruction
-
-#       fig = plt.figure()
-#       ax = fig.add_subplot(111, projection='3d')
-#       ax.scatter(x, y, -z, zdir='z', c='red')
-
-#       plt.show()
+#       array_to_vmd_xyz(model, settings.PLOT_DIR, '%d.xyz'%(cell_instance.pk))
