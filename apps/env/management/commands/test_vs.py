@@ -1,12 +1,13 @@
 #django
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
 #local
 from apps.cell.models import CellInstance, Cell
 from apps.env.models import Region
 from apps.image.util.life.life import Life
 from apps.image.util.life.rule import *
-from apps.image.util.tools import get_surface_elements
+from apps.image.util.tools import get_surface_elements, array_to_vmd_xyz
 
 #util
 import matplotlib.pyplot as plt
@@ -27,8 +28,10 @@ class Command(BaseCommand):
       #1. get outline of mask
 
       #2. get gfp model
-      model = reconstruction(747, ones=True)
-      z,x,y = model.nonzero()
+      model = cell_instance.reconstruction_3D()
+
+      array_to_vmd_xyz(model, settings.PLOT_DIR, '%d.xyz'%(cell_instance.pk))
+#       z,x,y = model.nonzero()
 
       #3. put in array with sphere of radius 14 microns
 
@@ -36,8 +39,8 @@ class Command(BaseCommand):
 
       #3D reconstruction
 
-      fig = plt.figure()
-      ax = fig.add_subplot(111, projection='3d')
-      ax.scatter(x, y, -z, zdir='z', c='red')
+#       fig = plt.figure()
+#       ax = fig.add_subplot(111, projection='3d')
+#       ax.scatter(x, y, -z, zdir='z', c='red')
 
-      plt.show()
+#       plt.show()

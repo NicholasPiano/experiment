@@ -85,8 +85,33 @@ def cartesian(arrays, out=None):
             out[j*m:(j+1)*m,1:] = out[0:m,1:]
     return out
 
-def array_to_vmd_xyz(array, path, filename):
+def array_to_vmd_xyz(array, path, filename): #expects 3D array
   ''' For each element of the array, print out its coordinates and its value to a file. '''
 
-  with open(os.path.join(path, filename)) as xyz_file:
+  rows, columns, levels = array.shape
 
+  with open(os.path.join(path, filename), 'w') as xyz_file:
+
+    #loop over array
+    counter = 0
+    xyz_file.write('%d\n'%((array>0).sum()-1))
+    for row in range(rows):
+      for column in range(columns):
+        for level in range(levels):
+          if array[row,column,level]>0:
+            value = array[row,column,level]
+            xyz_file.write('Pixel%d %d %d %d %d\n'%(counter, row, column, level, value))
+            counter+=1
+
+def array_to_matlab_script(array, path, filename):
+  pass
+
+def get_bins(data):
+  #get interquartile range
+  q75, q25 = np.percentile(data, [75,25])
+  iqr = q75 - q25
+
+  #number of bins
+  data_range = 360
+  n_bins = data_range*(len(data)**(1/3.0))/(iqr)
+  return n_bins

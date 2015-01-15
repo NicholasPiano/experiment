@@ -9,7 +9,7 @@ from apps.cell.models import CellInstance, Cell, Extension
 from apps.env.models import Region, Experiment
 from apps.image.util.life.life import Life
 from apps.image.util.life.rule import CoagulationsFillInVote
-from apps.image.util.tools import get_surface_elements
+from apps.image.util.tools import get_surface_elements, get_bins
 
 #util
 import matplotlib
@@ -43,6 +43,11 @@ class Command(BaseCommand):
 
       colours = ['blue','red','green','yellow']
 
+      def count_histogram(data):
+        hist, bins = np.histogram(data, bins=get_bins(data))
+        hist = np.array(hist, dtype=float)/np.sum(hist) #all bar heights add up to one
+        return (hist, bins)
+
       ### 2C
 
 #       r1 = [float(extension.length)*float(extension.cell.experiment.x_microns_over_pixels) for extension in Extension.objects.filter(region__index=1)]
@@ -59,23 +64,27 @@ class Command(BaseCommand):
 #       ax2 = fig.add_subplot(412, sharex=ax4)
 #       ax3 = fig.add_subplot(413, sharex=ax4)
 
-#       bin_width = 2
-#       bins = np.arange(0, max_l+bin_width, bin_width)
+#       hist1, bins1 = count_histogram(r1)
+#       hist2, bins2 = count_histogram(r2)
+#       hist3, bins3 = count_histogram(r3)
+#       hist4, bins4 = count_histogram(r4)
 
-#       ax1.hist(r1, bins=bins, facecolor=colours[0], normed=True)
-#       ax2.hist(r2, bins=bins, facecolor=colours[1], normed=True)
-#       ax3.hist(r3, bins=bins, facecolor=colours[2], normed=True)
-#       ax4.hist(r4, bins=bins, facecolor=colours[3], normed=True)
+#       ax1.bar(bins1[:-1], hist1, width=np.diff(bins1), facecolor=colours[0])
+#       ax2.bar(bins2[:-1], hist2, width=np.diff(bins2), facecolor=colours[1])
+#       ax3.bar(bins3[:-1], hist3, width=np.diff(bins3), facecolor=colours[2])
+#       ax4.bar(bins4[:-1], hist4, width=np.diff(bins4), facecolor=colours[3])
 
-#       ax1.set_ylim([0,0.05])
-#       ax2.set_ylim([0,0.05])
-#       ax3.set_ylim([0,0.05])
-#       ax4.set_ylim([0,0.05])
+#       plot_max = 0.12
 
-#       ax1.yaxis.set_ticks([0.05])
-#       ax2.yaxis.set_ticks([0.05])
-#       ax3.yaxis.set_ticks([0.05])
-#       ax4.yaxis.set_ticks([0.05])
+#       ax1.set_ylim([0,plot_max])
+#       ax2.set_ylim([0,plot_max])
+#       ax3.set_ylim([0,plot_max])
+#       ax4.set_ylim([0,plot_max])
+
+#       ax1.yaxis.set_ticks([plot_max])
+#       ax2.yaxis.set_ticks([plot_max])
+#       ax3.yaxis.set_ticks([plot_max])
+#       ax4.yaxis.set_ticks([plot_max])
 
 #       plt.setp(ax1.get_xticklabels(), visible=False)
 #       plt.setp(ax2.get_xticklabels(), visible=False)
@@ -88,37 +97,39 @@ class Command(BaseCommand):
 
       ### 2B
 
-#       r1 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=1)]
-#       r2 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=2)]
-#       r3 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=3)]
-#       r4 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=4)]
+      r1 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=1)]
+      r2 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=2)]
+      r3 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=3)]
+      r4 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=4)]
 
-#       #mean
+      #mean
 #       m1,m2,m3,m4 = tuple([np.mean(r) for r in [r1,r2,r3,r4]])
 #       print((m1,m2,m3,m4))
 
 #       max_l = max(r1+r2+r3+r4)
 
-#       #histogram for each in one figure
-#       fig = plt.figure()
-#       ax4 = fig.add_subplot(414)
-#       ax4.set_xlim([0,30])
-#       ax1 = fig.add_subplot(411, sharex=ax4)
-#       ax1.set_xlim([0,30])
-#       ax2 = fig.add_subplot(412, sharex=ax4)
-#       ax2.set_xlim([0,30])
-#       ax3 = fig.add_subplot(413, sharex=ax4)
-#       ax3.set_xlim([0,30])
+      #histogram for each in one figure
+      fig = plt.figure()
+      ax4 = fig.add_subplot(414)
+      ax4.set_xlim([0,20])
+      ax1 = fig.add_subplot(411, sharex=ax4)
+      ax1.set_xlim([0,20])
+      ax2 = fig.add_subplot(412, sharex=ax4)
+      ax2.set_xlim([0,20])
+      ax3 = fig.add_subplot(413, sharex=ax4)
+      ax3.set_xlim([0,20])
 
-#       ax1.set_ylim([0,0.3])
-#       ax2.set_ylim([0,0.3])
-#       ax3.set_ylim([0,0.3])
-#       ax4.set_ylim([0,0.3])
+      plot_max = 0.08
 
-#       ax1.yaxis.set_ticks([0.3])
-#       ax2.yaxis.set_ticks([0.3])
-#       ax3.yaxis.set_ticks([0.3])
-#       ax4.yaxis.set_ticks([0.3])
+      ax1.set_ylim([0,plot_max])
+      ax2.set_ylim([0,plot_max])
+      ax3.set_ylim([0,plot_max])
+      ax4.set_ylim([0,plot_max])
+
+      ax1.yaxis.set_ticks([plot_max])
+      ax2.yaxis.set_ticks([plot_max])
+      ax3.yaxis.set_ticks([plot_max])
+      ax4.yaxis.set_ticks([plot_max])
 
 #       bin_width = 0.6
 #       bins = np.arange(0, max_l+bin_width, bin_width)
@@ -128,11 +139,21 @@ class Command(BaseCommand):
 #       ax3.hist(r3, bins=bins, facecolor=colours[2], normed=True)
 #       ax4.hist(r4, bins=bins, facecolor=colours[3], normed=True)
 
-#       plt.setp(ax1.get_xticklabels(), visible=False)
-#       plt.setp(ax2.get_xticklabels(), visible=False)
-#       plt.setp(ax3.get_xticklabels(), visible=False)
+      hist1, bins1 = count_histogram(r1)
+      hist2, bins2 = count_histogram(r2)
+      hist3, bins3 = count_histogram(r3)
+      hist4, bins4 = count_histogram(r4)
 
-#       ax4.set_xlabel('Cell velocity ($\mu m$/minute)')
-#       plt.ylabel('Frequency')
+      ax1.bar(bins1[:-1], hist1, width=np.diff(bins1), facecolor=colours[0])
+      ax2.bar(bins2[:-1], hist2, width=np.diff(bins2), facecolor=colours[1])
+      ax3.bar(bins3[:-1], hist3, width=np.diff(bins3), facecolor=colours[2])
+      ax4.bar(bins4[:-1], hist4, width=np.diff(bins4), facecolor=colours[3])
 
-#       plt.show()
+      plt.setp(ax1.get_xticklabels(), visible=False)
+      plt.setp(ax2.get_xticklabels(), visible=False)
+      plt.setp(ax3.get_xticklabels(), visible=False)
+
+      ax4.set_xlabel('Cell velocity ($\mu m$/minute)')
+      plt.ylabel('Frequency')
+
+      plt.show()

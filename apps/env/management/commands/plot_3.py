@@ -9,7 +9,7 @@ from apps.cell.models import CellInstance, Cell, Extension
 from apps.env.models import Region, Experiment
 from apps.image.util.life.life import Life
 from apps.image.util.life.rule import CoagulationsFillInVote
-from apps.image.util.tools import get_surface_elements
+from apps.image.util.tools import get_surface_elements, get_bins
 
 #util
 import matplotlib
@@ -40,16 +40,6 @@ class Command(BaseCommand):
       '''
 
       colours = ['blue','red','green','yellow']
-
-      def get_bins(data):
-        #get interquartile range
-        q75, q25 = np.percentile(data, [75,25])
-        iqr = q75 - q25
-
-        #number of bins
-        data_range = 360
-        n_bins = data_range*(len(data)**(1/3.0))/(iqr)
-        return n_bins
 
       r1 = [float(extension.angle)*180.0/math.pi for extension in Extension.objects.filter(region__index=1)]
       r2 = [float(extension.angle)*180.0/math.pi for extension in Extension.objects.filter(region__index=2)]

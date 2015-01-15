@@ -385,6 +385,7 @@ class CellInstance(models.Model):
 
   def reconstruction_mask_outline(self, top_and_bottom=False):
     ''' Basically the same as the 3D reconstruction '''
+    pass
 
 ### BoundingBox
 class BoundingBox(models.Model):
