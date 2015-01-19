@@ -8,6 +8,7 @@
 import os
 import numpy as np
 from scipy.ndimage.filters import convolve
+from scipy import io as sio
 
 #methods
 def get_neighbour_array(array): #gets number of non-zero neighbours each cell has.
@@ -104,7 +105,31 @@ def array_to_vmd_xyz(array, path, filename): #expects 3D array
             counter+=1
 
 def array_to_matlab_script(array, path, filename):
-  pass
+  sio.savemat(os.path.join(path, filename), {'array':array})
+
+def array_to_vmd_vtf(array, path, filename):
+  with open(os.path.join(path, filename), 'w') as vtf_file:
+
+    rows, columns, levels = array.shape
+
+    #define atoms with radii
+    counter = 0
+    point_dict_list = []
+    mx = array.max()
+    for row in range(rows):
+      for column in range(columns):
+        for level in range(levels):
+          if array[row,column,level]>0:
+            value = array[row,column,level]
+            point_dict_list.append({'index':counter, 'row':row, 'column':column, 'level':level})
+
+            vtf_file.write('atom %d radius %f\n'%(counter, float(value)/float(mx)))
+            counter += 1
+
+    #give atom positions
+    vtf_file.write('\ntimestep indexed\n')
+    for point_dict in point_dict_list:
+      vtf_file.write('%d %d %d %d\n'%(point_dict['index'],point_dict['row'],point_dict['column'],point_dict['level']))
 
 def get_bins(data, mod=2):
   #get interquartile range

@@ -17,6 +17,7 @@ from scipy.ndimage import distance_transform_edt
 from scipy.misc import imsave, imread, imresize
 from scipy.ndimage.measurements import center_of_mass
 from scipy.signal import find_peaks_cwt
+from scipy.ndimage.morphology import binary_dilation as dilate
 import numpy as np
 import string
 import random
@@ -382,12 +383,178 @@ class CellInstance(models.Model):
 
     #7. insert mask outline into top and bottom layers of 3D array
 
+    return array_3D_masked
+
+  def reconstruction_3D_reduced(self):
+    ''' On each level, only the 10 furthest pixels from the center of the cell are accepted. '''
+    #1. resources
+    #- mask
+    mask = np.array(np.invert(self.mask_array()), dtype=bool)
+
+    #- bounding box
+    bounding_box = self.cell.bounding_box.get()
+
+    #- focus image set
+    focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
+
+    #2. first loop:
+    #- load images
+    #- cut to bounding box
+    #- mask with segmented image
+    #- get mean list
+    mean_list = []
+    array_3D = []
+    for focus_image in focus_image_set.order_by('focus'):
+      #load
+      focus_image.load()
+      #cut
+      cut_image = bounding_box.cut(focus_image.array)
+      #mask
+      focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
+      #mean
+      mean_list.append(focus_image.array.mean()) # <<< mean list
+      focus_image.mean = focus_image.array.mean()
+      focus_image.save()
+      #3D
+      array_3D.append(focus_image.array.filled())
+      focus_image.unload()
+
+    global_mean = np.sum(mean_list)/float(len(mean_list))
+    array_3D = np.array(array_3D)
+
+    #3. second loop
+    #- threshold
+    array_3D_binary = np.zeros(array_3D.shape)
+    array_3D_binary[array_3D>global_mean] = 1
+
+    #- run life
+    for i in range(array_3D.shape[0]):
+      array_binary = array_3D_binary[i]
+
+      life = Life(array_binary)
+      life.ruleset = CoagulationsFillInVote()
+      life.ruleset.timestamps = [2,4,4]
+      life.update_cycle()
+
+      array_3D_binary[i] = life.array
+
+    #5. mask 3D array
+    array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
+    array_3D_masked = array_3D_masked.filled()
+
+    #6. set all nonzero to one
+    if ones:
+      array_3D_masked[array_3D_masked>0] = 1
+
+    #7. insert mask outline into top and bottom layers of 3D array
 
     return array_3D_masked
 
   def reconstruction_mask_outline(self, top_and_bottom=False):
-    ''' Basically the same as the 3D reconstruction '''
+    ''' Basically the same as the 3D reconstruction, but with the mask outline on the top and bottom of the field '''
+    #1. resources
+    #- mask
+    mask = np.array(np.invert(self.mask_array()), dtype=bool)
+
+    #- number of images in stack
+    number_of_stack_images = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0).count()
+
+    #2. make blank array
+    mask_3D = np.zeros((number_of_stack_images, mask.shape[0], mask.shape[1]))
+
+    #3. dilate mask and subtract to get edge
+    dilated_mask = dilate(mask)
+    mask = dilated_mask - mask
+
+    #4. set top and bottom of 3D
+    mask_3D[0] = mask
+    mask_3D[:-1] = mask
+
+    return mask_3D
+
+  def display_model(self):
+    ''' Brings up matplotlib window with the model in its field. '''
     pass
+
+  def display_model_in_environment():
+    ''' Displays the model and field outlines in the original brightfield image. '''
+    pass
+
+  def volume_test(self, radius_estimate):
+    ''' On each level, only the 10 furthest pixels from the center of the cell are accepted. '''
+    #1. resources
+    #- mask
+    mask = np.array(np.invert(self.mask_array()), dtype=bool)
+
+    #- bounding box
+    bounding_box = self.cell.bounding_box.get()
+#     bounding_box.y = bounding_box.y - 30
+
+    #- focus image set
+    focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0) #only gfp
+
+    #2. first loop:
+    #- load images
+    #- cut to bounding box
+    #- mask with segmented image
+    #- get mean list
+    mean_list = []
+    above_mean_list = []
+    array_3D = []
+    for focus_image in focus_image_set.order_by('focus'):
+      #load
+      focus_image.load()
+      #cut
+      cut_image = bounding_box.cut(focus_image.array)
+      #mask
+      focus_image.array = np.ma.array(cut_image, mask=mask, fill_value=0)
+      #mean
+      mean_list.append(focus_image.array.mean()) # <<< mean list
+      focus_image.mean = focus_image.array.mean()
+      focus_image.save()
+      above_mean_list.append((focus_image.array>focus_image.mean).sum())
+      #3D
+      array_3D.append(focus_image.array.filled())
+      focus_image.unload()
+
+    global_mean = np.sum(mean_list)/float(len(mean_list))
+    array_3D = np.array(array_3D)
+
+    #radius estimate
+    max_pos = np.argmax(mean_list)
+    pixel_radius = int((1.0/float(self.experiment.z_microns_over_pixels))*radius_estimate)
+    area = float(self.surface_area*self.experiment.x_microns_over_pixels*self.experiment.x_microns_over_pixels)/float(self.experiment.z_microns_over_pixels*self.experiment.z_microns_over_pixels)
+    level_delta = int(math.pi*(pixel_radius**3)/area)
+    print([max_pos, pixel_radius, level_delta])
+
+    #3. second loop
+    #- threshold
+    array_3D_binary = np.zeros(array_3D.shape)
+    array_3D_binary[array_3D>global_mean] = 1
+
+    above_global_mean_list = []
+
+    #- run life
+    for i in range(max_pos-level_delta, max_pos+level_delta+1):
+      array_original = array_3D[:,:,i]
+      above_global_mean_list.append((array_original>global_mean).sum())
+      array_binary = array_3D_binary[i]
+
+      life = Life(array_binary)
+      life.ruleset = CoagulationsFillInVote()
+      life.ruleset.timestamps = [2,4,4]
+      life.update_cycle()
+
+      array_3D_binary[i] = life.array
+
+    #5. mask 3D array
+    array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
+    array_3D_masked = array_3D_masked.filled()
+
+    #7. insert mask outline into top and bottom layers of 3D array
+
+    return (array_3D_masked, mean_list, above_mean_list, global_mean, above_global_mean_list)
+
 
 ### BoundingBox
 class BoundingBox(models.Model):
