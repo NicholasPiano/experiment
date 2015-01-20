@@ -480,7 +480,7 @@ class CellInstance(models.Model):
     ''' Displays the model and field outlines in the original brightfield image. '''
     pass
 
-  def volume_test(self, radius_estimate):
+  def volume_test(self, radius_estimate=7): #microns
     ''' On each level, only the 10 furthest pixels from the center of the cell are accepted. '''
     #1. resources
     #- mask
@@ -522,10 +522,8 @@ class CellInstance(models.Model):
 
     #radius estimate
     max_pos = np.argmax(mean_list)
-    pixel_radius = int((1.0/float(self.experiment.z_microns_over_pixels))*radius_estimate)
-    area = float(self.surface_area*self.experiment.x_microns_over_pixels*self.experiment.x_microns_over_pixels)/float(self.experiment.z_microns_over_pixels*self.experiment.z_microns_over_pixels)
-    level_delta = int(math.pi*(pixel_radius**3)/area)
-    print([max_pos, pixel_radius, level_delta])
+    microns_area_radius_squared = (self.surface_area*float(self.experiment.x_microns_over_pixels)**2)/math.pi
+    level_delta = int(((radius_estimate**3)/microns_area_radius_squared)/float(self.experiment.z_microns_over_pixels)) + 1
 
     #3. second loop
     #- threshold
@@ -536,7 +534,7 @@ class CellInstance(models.Model):
 
     #- run life
     for i in range(max_pos-level_delta, max_pos+level_delta+1):
-      array_original = array_3D[:,:,i]
+      array_original = array_3D[i]
       above_global_mean_list.append((array_original>global_mean).sum())
       array_binary = array_3D_binary[i]
 
@@ -546,6 +544,10 @@ class CellInstance(models.Model):
       life.update_cycle()
 
       array_3D_binary[i] = life.array
+
+    #4. cut outside range
+    array_3D[:max_pos-level_delta-1] = 0
+    array_3D[max_pos+level_delta+1:] = 0
 
     #5. mask 3D array
     array_3D_masked = np.ma.array(array_3D, mask=np.invert(np.array(array_3D_binary), dtype=bool), fill_value=0)
