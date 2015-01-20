@@ -476,7 +476,7 @@ class CellInstance(models.Model):
     ''' Brings up matplotlib window with the model in its field. '''
     pass
 
-  def display_model_in_environment():
+  def display_model_in_environment(self):
     ''' Displays the model and field outlines in the original brightfield image. '''
     pass
 
@@ -555,6 +555,43 @@ class CellInstance(models.Model):
 
     return (array_3D_masked, mean_list, above_mean_list, global_mean, above_global_mean_list)
 
+  def brightfield_3D_array(self):
+    #- bounding box
+    bounding_box = self.cell.bounding_box.get()
+
+    #- focus image set
+    focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=1).order_by('focus') #only bf
+
+    #compile
+    brightfield_3D = []
+
+    for im in focus_image_set:
+      im.load()
+      cut_image = bounding_box.cut(im.array)
+      brightfield_3D.append(cut_image)
+      im.unload()
+    brightfield_3D = np.array(brightfield_3D)
+
+    return brightfield_3D
+
+  def gfp_3D_array(self):
+    #- bounding box
+    bounding_box = self.cell.bounding_box.get()
+
+    #- focus image set
+    focus_image_set = self.experiment.images.filter(series=self.cell.series, timestep=self.timestep, channel=0).order_by('focus') #only gfp
+
+    gfp_3D = []
+
+    for im in focus_image_set:
+      im.load()
+      cut_image = bounding_box.cut(im.array)
+      gfp_3D.append(cut_image)
+      im.unload()
+
+    gfp_3D = np.array(gfp_3D)
+
+    return gfp_3D
 
 ### BoundingBox
 class BoundingBox(models.Model):
