@@ -24,7 +24,11 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    cell_instance = CellInstance.objects.get(pk=931)
+    cell_instance = CellInstance.objects.get(pk=2)
 
-    (array_3D_masked, mean_list, above_mean_list, global_mean, above_global_mean_list) = cell_instance.volume_test()
-    print((array_3D_masked>0).sum())
+    for cell_instance in CellInstance.objects.all():
+      (array_3D_masked, mean_list, above_mean_list, global_mean, above_global_mean_list) = cell_instance.volume_test()
+      s = (array_3D_masked>0).sum()
+      print([cell_instance.pk, cell_instance.volume, s])
+      cell_instance.volume = s
+      cell_instance.save()

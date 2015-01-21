@@ -59,11 +59,11 @@ class Command(BaseCommand):
       max_v = 15000
 
       #region
-      region_index = 4
+      region_index = 1
       region = Region.objects.get(index=region_index)
       data = []
       for cell_instance in region.cell_instances.all():
-        data.append(np.array([float(cell_instance.experiment.area(cell_instance.surface_area)), float(cell_instance.experiment.volume(cell_instance.volume)), float(cell_instance.experiment.area(cell_instance.surface_area))/float(cell_instance.experiment.volume(cell_instance.volume))]))
+        data.append(np.array([float(cell_instance.experiment.area(cell_instance.surface_area)), float(cell_instance.experiment.volume(cell_instance.volume)), float(cell_instance.experiment.area(cell_instance.surface_area))/(float(cell_instance.experiment.volume(cell_instance.volume))+1)]))
 
       data = filter(lambda x: x[1] > 2000 and x[0]<3000 and x[1]<15000, data)
 
@@ -103,9 +103,9 @@ class Command(BaseCommand):
 
       #ranges
       ax.set_xlim([min_sa, max_sa])
-      ax.set_ylim([min_v, 20000])
+      ax.set_ylim([min_v, 5000])
       ax_x_density.set_xlim([min_sa, max_sa])
-      ax_y_density.set_ylim([min_v, 20000])
+      ax_y_density.set_ylim([min_v, 5000])
 
       #scatter
       x = np.array([d[0] for d in data])

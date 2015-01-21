@@ -533,7 +533,7 @@ class CellInstance(models.Model):
     above_global_mean_list = []
 
     #- run life
-    for i in range(max_pos-level_delta, max_pos+level_delta+1):
+    for i in range(max_pos-level_delta if max_pos-level_delta >= 0 else 0, max_pos+level_delta+1 if max_pos+level_delta+1 < array_3D.shape[0] else array_3D.shape[0]-1):
       array_original = array_3D[i]
       above_global_mean_list.append((array_original>global_mean).sum())
       array_binary = array_3D_binary[i]
