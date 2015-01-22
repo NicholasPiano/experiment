@@ -41,7 +41,7 @@ class Command(BaseCommand):
       '''
 
       def count_histogram(data):
-        hist, bins = np.histogram(data, bins=get_bins(data, mod=0.5))
+        hist, bins = np.histogram(data, bins=get_bins(data, mod=1))
         hist = np.array(hist, dtype=float)/np.sum(hist) #all bar heights add up to one
         return (hist, bins)
 
@@ -65,7 +65,7 @@ class Command(BaseCommand):
       for cell_instance in region.cell_instances.all():
         data.append(np.array([float(cell_instance.experiment.area(cell_instance.surface_area)), float(cell_instance.experiment.volume(cell_instance.volume)), float(cell_instance.experiment.area(cell_instance.surface_area))/(float(cell_instance.experiment.volume(cell_instance.volume))+1)]))
 
-      data = filter(lambda x: x[1] > 2000 and x[0]<3000 and x[1]<15000, data)
+      data = filter(lambda x: x[1]>1000, data)
 
       #definitions for the axes
       left, width = 0.1, 0.60
@@ -123,12 +123,13 @@ class Command(BaseCommand):
       ax_x_density.bar(x_bins[:-1], x_hist, width=np.diff(x_bins), facecolor=colours[region_index-1])
       ax_y_density.barh(y_bins[:-1], y_hist, height=np.diff(y_bins), facecolor=colours[region_index-1])
 
-#       ax_x_density.set_ylim([0,0.007])
-#       ax_y_density.set_xlim([])
-#       ax_x_density.yaxis.set_ticks([0.007])
-#       ax_y_density.xaxis.set_ticks([0.007])
+      ax_x_density.set_ylim([0,0.16])
+      ax_y_density.set_xlim([0,0.12])
+      ax_x_density.yaxis.set_ticks([0.16])
+      ax_y_density.xaxis.set_ticks([0.12])
 
       ax.set_xlabel(r'Segmented mask area ($\mu m^2$)')
       ax.set_ylabel(r'GFP volume ($\mu m^3$)')
 
+      plt.ion()
       plt.show()
