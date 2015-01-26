@@ -122,8 +122,9 @@ class CellInstance(models.Model):
   position_y = models.IntegerField(default=0)
   position_z = models.IntegerField(default=0)
 
-  def position(self, factor=1):
-    return factor*np.array([self.position_x, self.position_y, self.position_z], dtype=int)
+  def position(self, factor=None):
+    factor = np.array([self.experiment.x_microns_over_pixels, self.experiment.y_microns_over_pixels, self.experiment.z_microns_over_pixels], dtype=float) if factor is None else factor
+    return factor*np.array([self.position_x, self.position_y, self.position_z], dtype=float)
 
   velocity_x = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
   velocity_y = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
