@@ -39,77 +39,77 @@ class Command(BaseCommand):
       PLOT 3: Protrusion length vs angle
       '''
 
-      colours = ['blue','red','green','yellow']
-
-      def count_histogram(data):
-        hist, bins = np.histogram(data, bins=get_bins(data, mod=0.5))
+      def count_histogram(data, number_of_bins=None):
+        hist, bins = np.histogram(data, bins=get_bins(data, mod=1) if number_of_bins is None else number_of_bins)
         hist = np.array(hist, dtype=float)/np.sum(hist) #all bar heights add up to one
         return (hist, bins)
 
-      r1 = [float(extension.angle)*180.0/math.pi for extension in Extension.objects.filter(region__index=1)]
-      r2 = [float(extension.angle)*180.0/math.pi for extension in Extension.objects.filter(region__index=2)]
-      r3 = [float(extension.angle)*180.0/math.pi for extension in Extension.objects.filter(region__index=3)]
-      r4 = [float(extension.angle)*180.0/math.pi for extension in Extension.objects.filter(region__index=4)]
+      #start with a rectangular Figure
+      colours = ['blue','red','green','yellow']
+      fig = plt.figure(1, figsize=(10,10))
 
-      #histogram for each in one figure
-      fig = plt.figure()
-      ax4 = fig.add_subplot(414)
-      ax4.xaxis.set_ticks([-180, -135, -90, -45, 0, 45, 90, 135, 180])
-      ax1 = fig.add_subplot(411, sharex=ax4)
-      ax2 = fig.add_subplot(412, sharex=ax4)
-      ax3 = fig.add_subplot(413, sharex=ax4)
+      #min and max for axes
+      length = [extension.length for extension in Extension.objects.all()]
+      max_length = 80
+      min_length = 0
 
-      hist1, bins1 = count_histogram(r1)
-      hist2, bins2 = count_histogram(r2)
-      hist3, bins3 = count_histogram(r3)
-      hist4, bins4 = count_histogram(r4)
+      #region
+      corrections = {'050714':(1, math.pi/2.0),
+                     '190714':(-1, math.pi),
+                     '260714':(1, math.pi),}
 
-      ax1.bar(bins1[:-1], hist1, width=np.diff(bins1), facecolor=colours[0])
-      ax2.bar(bins2[:-1], hist2, width=np.diff(bins2), facecolor=colours[1])
-      ax3.bar(bins3[:-1], hist3, width=np.diff(bins3), facecolor=colours[2])
-      ax4.bar(bins4[:-1], hist4, width=np.diff(bins4), facecolor=colours[3])
+      region_index = 1
+      region = Region.objects.get(index=region_index)
+      data = []
+      for extension in region.extensions.all():
+        c = corrections[extension.cell.experiment.name]
+        data.append((extension.length*extension.cell.experiment.x_microns_over_pixels, (float(c[0])*float(extension.angle) + float(c[1]))*float(180.0/math.pi)))
 
-      plot_max = 0.10
+      #definitions for the axes
+      left, width = 0.1, 0.65
+      bottom, height = 0.1, 0.65
+      bottom_h = left_h = left+width+0.02
 
-      ax1.set_ylim([0,plot_max])
-      ax2.set_ylim([0,plot_max])
-      ax3.set_ylim([0,plot_max])
-      ax4.set_ylim([0,plot_max])
+      rect_scatter = [left, bottom, width, height]
+      rect_x_density = [left, bottom_h, width, 0.2]
+      rect_y_density = [left_h, bottom, 0.2, height]
 
-      ax1.yaxis.set_ticks([plot_max])
-      ax2.yaxis.set_ticks([plot_max])
-      ax3.yaxis.set_ticks([plot_max])
-      ax4.yaxis.set_ticks([plot_max])
+      #axes
+      ax = plt.axes(rect_scatter)
+      ax_x_density = plt.axes(rect_x_density)
+      ax_y_density = plt.axes(rect_y_density)
 
-      #lines
-      y = [0,plot_max]
-      x1 = [-90,-90]
-      x2 = [0,0]
-      x3 = [90,90]
+      #scatter
+      y = np.array([float(d[0]) for d in data])
+      x = np.array([float(d[1]) for d in data])
 
-      ax1.plot(x1, y, color='red')
-      ax1.plot(x2, y, color='red')
-      ax1.plot(x3, y, color='red')
+      x[x>180] -= 360
+      x[x<-180] += 360
 
-      ax2.plot(x1, y, color='red')
-      ax2.plot(x2, y, color='red')
-      ax2.plot(x3, y, color='red')
+      ax.set_ylim([float(min_length), float(max_length)])
+      ax.set_xlim([-180,180])
+      ax.set_xticks(np.arange(-180,181,45))
+      ax.plot([90,90],[0,100], '-', c='red', alpha=0.7)
+      ax.plot([0,0],[0,100], '-', c='red', alpha=0.7)
+      ax.plot([-90,-90],[0,100], '-', c='red', alpha=0.7)
+      ax.scatter(x, y, c=colours[region_index-1])
 
-      ax3.plot(x1, y, color='red')
-      ax3.plot(x2, y, color='red')
-      ax3.plot(x3, y, color='red')
+      #histograms
+      ax_x_density.xaxis.set_major_formatter(nullfmt)
+      ax_y_density.yaxis.set_major_formatter(nullfmt)
 
-      ax4.plot(x1, y, color='red')
-      ax4.plot(x2, y, color='red')
-      ax4.plot(x3, y, color='red')
+      x_hist, x_bins = count_histogram(x, number_of_bins=27)
+      y_hist, y_bins = count_histogram(y, number_of_bins=55)
 
-      plt.setp(ax1.get_xticklabels(), visible=False)
-      plt.setp(ax2.get_xticklabels(), visible=False)
-      plt.setp(ax3.get_xticklabels(), visible=False)
+      ax_x_density.bar(x_bins[:-1], x_hist, width=np.diff(x_bins), facecolor=colours[region_index-1])
+      ax_y_density.barh(y_bins[:-1], y_hist, height=np.diff(y_bins), facecolor=colours[region_index-1])
 
-      ax4.set_xlabel(r'Extension angle, $\theta$ (degrees)')
-      plt.ylabel('Frequency')
-      plt.xlim([-190, 190])
+      ax_x_density.set_ylim([0,0.16])
+      ax_y_density.set_xlim([0,0.09])
+      ax_x_density.yaxis.set_ticks([0.16])
+      ax_y_density.xaxis.set_ticks([0.09])
+
+      ax.set_xlabel(r'Angle from barrier, $\theta$ (degrees)')
+      ax.set_ylabel(r'Extension length ($\mu m$)')
 
       plt.show()
-
