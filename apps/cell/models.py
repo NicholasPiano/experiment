@@ -144,6 +144,9 @@ class CellInstance(models.Model):
   volume = models.IntegerField(default=0)
   surface_area = models.IntegerField(default=0)
 
+  def area(self):
+    return float(self.experiment.x_microns_over_pixels*self.experiment.y_microns_over_pixels)*self.surface_area
+
   #-extensions
   max_extension_length = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
   max_extension_angle = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
@@ -631,4 +634,8 @@ class Extension(models.Model):
 
   #properties
   length = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
+
+  def m_length(self):
+    return float(self.cell.experiment.x_microns_over_pixels*self.length)
+
   angle = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)

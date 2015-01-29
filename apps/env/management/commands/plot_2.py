@@ -97,10 +97,10 @@ class Command(BaseCommand):
 
       ### 2B
 
-      r1 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=1)]
-      r2 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=2)]
-      r3 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=3)]
-      r4 = [norm(cell_instance.velocity())*float(cell_instance.cell.experiment.x_microns_over_pixels) for cell_instance in CellInstance.objects.filter(region__index=4)]
+      r1 = [norm(cell_instance.velocity()) for cell_instance in CellInstance.objects.filter(region__index=1)]
+      r2 = [norm(cell_instance.velocity()) for cell_instance in CellInstance.objects.filter(region__index=2)]
+      r3 = [norm(cell_instance.velocity()) for cell_instance in CellInstance.objects.filter(region__index=3)]
+      r4 = [norm(cell_instance.velocity()) for cell_instance in CellInstance.objects.filter(region__index=4)]
 
       #mean
 #       m1,m2,m3,m4 = tuple([np.mean(r) for r in [r1,r2,r3,r4]])
