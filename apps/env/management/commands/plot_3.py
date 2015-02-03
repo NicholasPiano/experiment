@@ -26,7 +26,8 @@ from scipy.optimize import curve_fit
 from scipy.misc import imread, imsave
 from scipy.ndimage import binary_dilation as dilate
 from matplotlib.ticker import NullFormatter
-nullfmt   = NullFormatter()
+matplotlib.rcParams.update({'font.size': 18})
+nullfmt = NullFormatter()
 
 # matplotlib.rc('font', **font)
 
@@ -104,9 +105,9 @@ class Command(BaseCommand):
       ax_x_density.bar(x_bins[:-1], x_hist, width=np.diff(x_bins), facecolor=colours[region_index-1])
       ax_y_density.barh(y_bins[:-1], y_hist, height=np.diff(y_bins), facecolor=colours[region_index-1])
 
-      ax_x_density.set_ylim([0,0.16])
+      ax_x_density.set_ylim([0,0.1])
       ax_y_density.set_xlim([0,0.09])
-      ax_x_density.yaxis.set_ticks([0.16])
+      ax_x_density.yaxis.set_ticks([0.1])
       ax_y_density.xaxis.set_ticks([0.09])
 
       ax.set_xlabel(r'Angle from barrier, $\theta$ (degrees)')

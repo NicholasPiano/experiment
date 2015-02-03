@@ -130,8 +130,8 @@ class CellInstance(models.Model):
   velocity_y = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
   velocity_z = models.DecimalField(default=0.0, decimal_places=4, max_digits=8)
 
-  def velocity(self, factor=1):
-    return factor*np.array([self.velocity_x, self.velocity_y], dtype=int)
+  def velocity(self):
+    return np.array([self.experiment.x_microns_over_pixels, self.experiment.y_microns_over_pixels], dtype=float)*np.array([self.velocity_x, self.velocity_y], dtype=float)/float(self.experiment.time_per_frame)
 
   displacement_x = models.IntegerField(default=0)
   displacement_y = models.IntegerField(default=0)

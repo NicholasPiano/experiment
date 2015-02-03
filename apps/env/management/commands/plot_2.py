@@ -26,7 +26,7 @@ from scipy.optimize import curve_fit
 from scipy.misc import imread, imsave
 from scipy.ndimage import binary_dilation as dilate
 from matplotlib.ticker import NullFormatter
-nullfmt   = NullFormatter()
+nullfmt = NullFormatter()
 
 # matplotlib.rc('font', **font)
 
@@ -102,6 +102,9 @@ class Command(BaseCommand):
       r3 = [norm(cell_instance.velocity()) for cell_instance in CellInstance.objects.filter(region__index=3)]
       r4 = [norm(cell_instance.velocity()) for cell_instance in CellInstance.objects.filter(region__index=4)]
 
+      for r in [r1,r2,r3,r4]:
+        print(np.mean(r))
+
       #mean
 #       m1,m2,m3,m4 = tuple([np.mean(r) for r in [r1,r2,r3,r4]])
 #       print((m1,m2,m3,m4))
@@ -111,13 +114,13 @@ class Command(BaseCommand):
       #histogram for each in one figure
       fig = plt.figure()
       ax4 = fig.add_subplot(414)
-      ax4.set_xlim([0,20])
+      ax4.set_xlim([0,2])
       ax1 = fig.add_subplot(411, sharex=ax4)
-      ax1.set_xlim([0,20])
+      ax1.set_xlim([0,2])
       ax2 = fig.add_subplot(412, sharex=ax4)
-      ax2.set_xlim([0,20])
+      ax2.set_xlim([0,2])
       ax3 = fig.add_subplot(413, sharex=ax4)
-      ax3.set_xlim([0,20])
+      ax3.set_xlim([0,2])
 
       plot_max = 0.15
 
@@ -148,5 +151,5 @@ class Command(BaseCommand):
       ax4.set_xlabel('Cell velocity ($\mu m$/minute)')
       plt.ylabel('Frequency')
 
-      plt.ion()
-      plt.show()
+      # plt.ion()
+      # plt.show()
