@@ -51,6 +51,9 @@ class Experiment(models.Model):
   def speed(self, pixels_per_timestep): #returns pixels per second
     return pixels_per_timestep*float(1.0/self.time_per_frame)
 
+  def time(self, timepoints): #in minutes
+    return timepoints*float(self.time_per_frame)
+
   #methods
   def create_cells_from_mask_directory(self):
     '''

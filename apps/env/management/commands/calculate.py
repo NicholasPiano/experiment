@@ -21,34 +21,32 @@ class Command(BaseCommand):
     help = ''
 
     def handle(self, *args, **options):
-      def count_histogram(data, number_of_bins=None):
-        hist, bins = np.histogram(data, bins=get_bins(data, mod=1) if number_of_bins is None else number_of_bins)
-        hist = np.array(hist, dtype=float)/np.sum(hist) #all bar heights add up to one
-        return (hist, bins)
+      # Get volume over time for a single cell instance
+      # cell = Cell.objects.get(pk=20)
 
-      #1. get average z in region 2, difference from average z in region 1
-#       for region_index in [1,2,3,4]:
-#         cell_instance_set = CellInstance.objects.filter(region__index=region_index)
-#         z = []
-#         for cell_instance in cell_instance_set:
-#           z.append(float(cell_instance.position()[2]))
-#         z_mean = np.mean(z)
-#         z_sem = sem(z)
-#         z_mode = mode(np.array(z, dtype=int))
-#         print([z_mean, z_sem, z_mode])
+      class C():
+        t = 0
+        v = 0
+        def __init__(self, t=0, v=0):
+          self.t=t
+          self.v=v
 
-      #2. mean velocity
-      for region_index in [1,2,3,4]:
-        print(np.mean([norm(ci.velocity()) for ci in CellInstance.objects.filter(region__index=region_index)]))
+      for cell in Cell.objects.all():
 
-      #3. mean extension length
-      for region_index in [1,2,3,4]:
-        print(np.mean([e.m_length() for e in Extension.objects.filter(region__index=region_index)]))
+        cells = []
 
-      #4. mean mask area
-      for region_index in [1,2,3,4]:
-        print(np.mean([ci.area() for ci in CellInstance.objects.filter(region__index=region_index)]))
+        for cell_instance in cell.cell_instances.filter(volume__gt=0).order_by('timestep'):
+          cells.append(C(t=cell_instance.experiment.time(cell_instance.timestep.index), v=cell_instance.experiment.volume(cell_instance.volume)))
 
+        cells = sorted(cells, key=lambda c: c.t)
 
+        timesteps = [c.t for c in cells]
+        volumes = [c.v for c in cells]
 
+        plt.plot(timesteps, volumes)
 
+      plt.title('Cell volume over time for all cells')
+      plt.xlabel(r'Time, t (minutes)')
+      plt.ylabel(r'Volume, V ($\mu m ^ 3$)')
+
+      plt.show()
