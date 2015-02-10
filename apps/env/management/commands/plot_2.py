@@ -122,7 +122,7 @@ class Command(BaseCommand):
       ax3 = fig.add_subplot(413, sharex=ax4)
       ax3.set_xlim([0,2])
 
-      plot_max = 0.15
+      plot_max = 0.16,
 
       ax1.set_ylim([0,plot_max])
       ax2.set_ylim([0,plot_max])
@@ -151,5 +151,5 @@ class Command(BaseCommand):
       ax4.set_xlabel('Cell velocity ($\mu m$/minute)')
       plt.ylabel('Frequency')
 
-      # plt.ion()
-      # plt.show()
+      plt.ion()
+      plt.show()

@@ -86,5 +86,8 @@ class Command(BaseCommand):
         m.append(masked_bf.mean())
 
       ax.plot(d, m)
+      ax.set_yticks([])
+      if i!=len(bf_list)-1:
+        ax.set_xticks([])
 
     plt.show()

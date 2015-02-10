@@ -106,7 +106,9 @@ class Command(BaseCommand):
       ax_y_density.barh(y_bins[:-1], y_hist, height=np.diff(y_bins), facecolor=colours[region_index-1])
 
       ax_x_density.set_ylim([0,0.1])
+      ax_x_density.set_xlim([-180,180])
       ax_y_density.set_xlim([0,0.09])
+      ax_y_density.set_ylim([float(min_length), float(max_length)])
       ax_x_density.yaxis.set_ticks([0.1])
       ax_y_density.xaxis.set_ticks([0.09])
 
