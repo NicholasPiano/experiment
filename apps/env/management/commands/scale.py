@@ -13,17 +13,17 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    #1. redo all timepoint scalings from images
-    scaling_dictionary = {
-      '260714':(0.5702,0.5696,1.482,7.68066666666667),
-      '190714':(0.5015,0.501,1.482,9.74083333333333),
-      '050714':(0.5369,0.5369,1.482,10.70033333333333),
-    }
+    #print scales for each experiment
+    for s in Series.objects.all():
+      #scales
+      x_microns_over_pixels = float(s.experiment.x_microns_over_pixels)
+      y_microns_over_pixels = float(s.experiment.y_microns_over_pixels)
+      z_microns_over_pixels = float(s.experiment.z_microns_over_pixels)
+      time_per_frame = float(s.experiment.time_per_frame)
 
-    for experiment_name, (x_microns_over_pixels, y_microns_over_pixels, z_microns_over_pixels, time_per_frame) in scaling_dictionary.items():
-      experiment = Experiment.objects.get(name=experiment_name)
-      experiment.x_microns_over_pixels = x_microns_over_pixels
-      experiment.y_microns_over_pixels = y_microns_over_pixels
-      experiment.z_microns_over_pixels = z_microns_over_pixels
-      experiment.time_per_frame = time_per_frame
-      experiment.save()
+      #load first image
+      image = s.experiment.images.get(series__index=s.index, timestep__index=0, channel=0, focus=0)
+      image.load()
+      shape = image.array.shape
+
+      print([s.experiment.name, s.index, shape, x_microns_over_pixels, y_microns_over_pixels, z_microns_over_pixels, time_per_frame])
