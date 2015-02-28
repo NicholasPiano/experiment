@@ -109,6 +109,9 @@ class Cell(models.Model):
 ### CellInstance
 class CellInstance(models.Model):
 
+  def __str__(self):
+    return '%s series %d, cell %d, t-%d' % (self.experiment.name, self.series.index, self.cell.index, self.timestep.index)
+
   #connections
   region = models.ForeignKey(Region, related_name='cell_instances')
   experiment = models.ForeignKey(Experiment, related_name='cell_instances')

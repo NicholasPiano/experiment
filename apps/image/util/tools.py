@@ -140,3 +140,6 @@ def get_bins(data, mod=2):
   data_range = np.max(data)-np.min(data)
   n_bins = data_range*(len(data)**(1/3.0))/(iqr*mod)
   return n_bins
+
+def index_to_letter(index):
+  pass

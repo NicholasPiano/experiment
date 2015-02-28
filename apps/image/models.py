@@ -46,7 +46,7 @@ class Image(models.Model):
     del self.array
 
   def save_array(self):
-    imsave(os.path.join(self.input_path, self.file_name), self.array)
+    imsave(os.path.join(path, self.file_name), self.array)
 
 ### SourceImage
 class SourceImage(Image):
