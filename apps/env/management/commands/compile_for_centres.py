@@ -12,6 +12,7 @@ import numpy as np
 from scipy.misc import imsave
 from scipy.ndimage.morphology import binary_dilation as dilate
 import matplotlib.pyplot as plt
+from skimage import exposure
 
 class Command(BaseCommand):
   args = '<none>'
@@ -27,7 +28,7 @@ class Command(BaseCommand):
       if not os.path.exists(os.path.join(base_output_path, e.name)):
         os.mkdir(os.path.join(base_output_path, e.name))
 
-      for s in e.series.all()[0]:
+      for s in e.series.all():
 
         #make directory
         if not os.path.exists(os.path.join(base_output_path, e.name, str(s.index))):
@@ -38,7 +39,7 @@ class Command(BaseCommand):
         gfp = s.experiment.images.filter(series=s, channel=0)
 
         #loop through timesteps
-        for t in s.timesteps.all()[0]:
+        for t in s.timesteps.all():
           print('%s %d %d'%(e.name, s.index, t.index))
           bf_t = bf.filter(timestep=t)
           gfp_t = gfp.filter(timestep=t)
@@ -57,5 +58,5 @@ class Command(BaseCommand):
             gfp_stack += g.array
 
           #add images
-          stack_sum = gfp_stack + bf_stack
-          imsave(os.path.join(base_output_path, e.name, str(s.index), 'stack_t%d.tif'%t.index))
+          stack_sum = exposure.equalize_hist(exposure.equalize_hist(gfp_stack) + exposure.equalize_hist(bf_stack))
+          imsave(os.path.join(base_output_path, e.name, str(s.index), 'stack_t%s.tif'%('0' if int(t.index)<10 else '' + str(t.index))), stack_sum)
