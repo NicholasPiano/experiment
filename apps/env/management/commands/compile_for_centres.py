@@ -12,7 +12,7 @@ import numpy as np
 from scipy.misc import imsave
 from scipy.ndimage.morphology import binary_dilation as dilate
 import matplotlib.pyplot as plt
-from skimage import exposure
+from skimage import exposure, filter
 
 class Command(BaseCommand):
   args = '<none>'
@@ -35,28 +35,43 @@ class Command(BaseCommand):
           os.mkdir(os.path.join(base_output_path, e.name, str(s.index)))
 
         #get image set
-        bf = s.experiment.images.filter(series=s, channel=1, focus__lt=40, focus__gt=30)
+        bf = s.experiment.images.filter(series=s, channel=1)
         gfp = s.experiment.images.filter(series=s, channel=0)
 
         #loop through timesteps
-        for t in s.timesteps.all():
+        for t in s.timesteps.order_by('index'):
           print('%s %d %d'%(e.name, s.index, t.index))
           bf_t = bf.filter(timestep=t)
           gfp_t = gfp.filter(timestep=t)
 
-          # stack images
-          bf_sample = bf_t[0]
-          bf_sample.load()
-          bf_stack = np.zeros(bf_sample.array.shape)
+          #1. global mean threshold gfp
+          #2. 3D smooth gfp
+          #3. multiply bf
+          #4. output z-projection
+
+          bf_3D = []
           for b in bf_t:
             b.load()
-            bf_stack += b.array
+            bf_3D.append(b.array)
 
-          gfp_stack = np.zeros(bf_sample.array.shape)
+          bf_3D = np.array(bf_3D)
+
+          gfp_3D = []
           for g in gfp_t:
             g.load()
-            gfp_stack += g.array
+            gfp_3D.append(g.array)
+
+          gfp_3D = np.array(gfp_3D)
+
+          gfp_threshold = np.array(gfp_3D)
+          gfp_threshold[gfp_3D<gfp_3D.mean()] = 0
+
+          gfp_smooth = filter.gaussian_filter(gfp_threshold, sigma=5)
 
           #add images
-          stack_sum = exposure.equalize_hist(exposure.equalize_hist(gfp_stack) + exposure.equalize_hist(bf_stack))
-          imsave(os.path.join(base_output_path, e.name, str(s.index), 'stack_t%s.tif'%('0' if int(t.index)<10 else '' + str(t.index))), stack_sum)
+          output_stack = gfp_smooth * exposure.equalize_hist(bf_3D)
+
+          output_image = np.sum(output_stack, axis=0)
+
+          #save
+          imsave(os.path.join(base_output_path, e.name, str(s.index), 'stack_t%s.tif'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))), output_image)
