@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     #1. for each series in each experiment, compile z-stacked gfp with z-stack (30-40) bf. Output time series to relevant directory
-    base_output_path = '/Volumes/transport/data/cp/centre-ij/input'
+    base_output_path = '/Volumes/transport/data/cp/centre-ij/input2'
 
     for e in Experiment.objects.all():
 
