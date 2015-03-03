@@ -22,7 +22,7 @@ class Command(BaseCommand):
     #1. for each series in each experiment, compile z-stacked gfp with z-stack (30-40) bf. Output time series to relevant directory
     base_output_path = '/Volumes/transport/data/cp/centre-ij/input2'
 
-    for e in Experiment.objects.all():
+    for e in Experiment.objects.filter(name='260714'):
 
       #make directory
       if not os.path.exists(os.path.join(base_output_path, e.name)):
@@ -63,14 +63,13 @@ class Command(BaseCommand):
 
           gfp_3D = np.array(gfp_3D)
 
-          gfp_threshold = np.array(gfp_3D)
+          gfp_threshold = exposure.equalize_hist(gfp_3D)
           gfp_threshold[gfp_3D<gfp_3D.mean()] = 0
 
           gfp_smooth = filter.gaussian_filter(gfp_threshold, sigma=5)
 
           #add images
           output_stack = gfp_smooth * exposure.equalize_hist(bf_3D)
-
           output_image = np.sum(output_stack, axis=0)
 
           #save
