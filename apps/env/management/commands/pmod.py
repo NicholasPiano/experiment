@@ -1,3 +1,8 @@
+'''
+Generate images using pmod algorithm. Highlights edges of cells using smoothed gfp.
+
+'''
+
 #django
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
@@ -20,9 +25,13 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     #1. for each series in each experiment, compile z-stacked gfp with z-stack (30-40) bf. Output time series to relevant directory
-    base_output_path = '/Volumes/transport/data/cp/centre-ij/input2'
+    base_output_path = '/Volumes/transport/data/cp/centre-ij/pmod'
 
-    for e in Experiment.objects.filter(name='260714'):
+    #make directory
+    if not os.path.exists(base_output_path):
+      os.mkdir(base_output_path)
+
+    for e in Experiment.objects.all():
 
       #make directory
       if not os.path.exists(os.path.join(base_output_path, e.name)):
