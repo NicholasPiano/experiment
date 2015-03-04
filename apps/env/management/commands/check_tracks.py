@@ -55,10 +55,11 @@ class Command(BaseCommand):
               cell_instances.append(CellInstance(line, cp=True))
 
         # loop through timesteps
-        cells = []
-
-        cell_count = 0
-        recog_count = 0
+        time = []
+        cell1_x_1 = []
+        cell1_y_1 = []
+        cell1_x_2 = []
+        cell1_y_2 = []
 
         for t in s.timesteps.order_by('index'):
           ci = filter(lambda c: c.frame==int(t.index)+1, cell_instances)
@@ -66,14 +67,21 @@ class Command(BaseCommand):
           ci_cp = filter(lambda c: c.cp, ci)
 
           for cell_track in ci_track:
-            cell_count += 1
-            # if cell_track.id in [1, 2, 3, 4, 5]:
-            count = 0
-            for cell_cp in ci_cp:
-              count += cell_track.check_proximity(cell_cp)
-            recog_count += count
+            if cell_track.id in [4]:
+              for cell_cp in ci_cp:
+                if cell_track.check_proximity(cell_cp):
+                  time.append(cell_track.frame)
+                  cell1_x_1.append(cell_track.row)
+                  cell1_y_1.append(cell_track.column)
+                  cell1_x_2.append(cell_cp.row)
+                  cell1_y_2.append(cell_cp.column)
 
-        print(cell_count, recog_count, float(recog_count/float(cell_count)))
+        plt.plot(time, cell1_x_1)
+        plt.plot(time, cell1_x_2)
+        plt.xlabel('frame')
+        plt.ylabel('x position')
+        plt.title('tracked and cell profiler recognition in each frame')
+        plt.show()
 
 
 class CellInstance():
