@@ -1,3 +1,8 @@
+'''
+Checks tracks visually by superimposing track markers onto the brightfield images.
+
+'''
+
 #django
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
@@ -13,60 +18,68 @@ import numpy as np
 from scipy.misc import imsave
 from scipy.ndimage.morphology import binary_dilation as dilate
 import matplotlib.pyplot as plt
-import cairocffi as cairo
-import math
+from skimage import exposure, filter
 
 class Command(BaseCommand):
   args = '<none>'
   help = ''
 
   def handle(self, *args, **options):
-    #1. for each series in each experiment, compile z-stacked gfp with z-stack (30-40) bf. Output time series to relevant directory
-    base_input_path = '/Volumes/transport/data/cp/centre-ij/input'
-    base_output_path = '/Volumes/transport/data/cp/centre-ij/tracks_cp'
+    base_input_path = '/Volumes/transport/data/cp/centre-ij/tracks'
+    base_output_path = '/Volumes/transport/data/cp/centre-ij/check-bf'
+
+    # make directory
+    if not os.path.exists(base_output_path):
+      os.mkdir(base_output_path)
 
     for e in Experiment.objects.all():
 
-      #make directory
+      # make directory
       if not os.path.exists(os.path.join(base_output_path, e.name)):
         os.mkdir(os.path.join(base_output_path, e.name))
 
       for s in e.series.all():
 
-        #make directory
+        # make directory
         if not os.path.exists(os.path.join(base_output_path, e.name, str(s.index))):
           os.mkdir(os.path.join(base_output_path, e.name, str(s.index)))
 
-        #get image set
-        bf = s.experiment.images.filter(series=s, channel=1)
-        gfp = s.experiment.images.filter(series=s, channel=0)
+        # get image
+        bf = s.experiment.images.filter(series=s, channel=1, focus__lt=40, focus__gt=30)
 
-        #load tracks file
+        # load tracks file
         cell_instances = []
         with open(os.path.join(base_input_path, e.name, str(s.index), 'tracks.xls')) as tracks_file:
           for line in tracks_file.readlines():
             if int('0' + line.split('\t')[0])>0:
               cell_instances.append(CellInstance(e.name, str(s.index), ' '.join(line.rstrip().split('\t'))))
 
-        #loop through timesteps
+        # loop through timesteps
         for t in s.timesteps.order_by('index'):
+          print('%s %d %d'%(e.name, s.index, t.index))
+
+          # cell instances at timestep
           ci = filter(lambda c: c.frame==int(t.index)+1, cell_instances)
-          print('%s %d %d \n%s\n'%(e.name, s.index, t.index, '\n'.join([str(c) for c in ci])))
-          bf_t = bf.filter(timestep=t)
-          bf_first = bf_t.get(focus=0)
-          bf_first.load()
 
-          b = np.zeros(bf_first.array.shape) #blank black field
+          # make black field
+          bf_t_stack = bf.filter(timestep=t)
+          bf_t1 = bf_t_stack[0]
+          bf_t1.load()
+          b = np.zeros(bf_t1.array.shape)
 
-          for c in ci:
+          #compile mean bf
+          for bf_ti in bf_t:
+            bf_ti.load()
+            b += bf_ti.array / float(len(bf_t))
+
+          for cell_instance in ci:
             # draw circle
             xx, yy = np.mgrid[:b.shape[0], :b.shape[1]]
             circle = (xx - c.row) ** 2 + (yy - c.column) ** 2 # distance from c
-            b[circle<10] = 255
+            b[circle<10] = 255 # radius of 10 px
 
-          # save image
-          image_path = os.path.join(base_output_path, e.name, str(s.index), 'tracks_cp_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index)))
-          imsave(image_path, b)
+          # save
+          imsave(os.path.join(base_output_path, e.name, str(s.index), 'tracks_t%s.tif'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))), b)
 
 class CellInstance():
   def __init__(self, experiment, series, line):

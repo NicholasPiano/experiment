@@ -1,3 +1,8 @@
+'''
+Check tracks visually by superimposing the track markers on the brightfield image of the environment.
+
+'''
+
 #django
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
