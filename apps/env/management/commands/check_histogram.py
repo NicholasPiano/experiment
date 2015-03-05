@@ -87,7 +87,7 @@ class Command(BaseCommand):
           # histogram bf
           bf_hist, bf_bin_edges = np.histogram(bf_mean_image, bins=100)
           bf_bin_centres = 0.5*(bf_bin_edges[1:]+bf_bin_edges[:-1])
-          bf_hist /= bf_hist.max()
+          bf_hist /= float(bf_hist.max())
           plt.plot(bf_bin_centres, bf_hist, label='bf')
 
           # save plot
@@ -110,7 +110,7 @@ class Command(BaseCommand):
           # histogram gfp
           gfp_hist, gfp_bin_edges = np.histogram(gfp_mean_image, bins=100)
           gfp_bin_centres = 0.5*(gfp_bin_edges[1:]+gfp_bin_edges[:-1])
-          gfp_hist /= gfp_hist.max()
+          gfp_hist /= float(gfp_hist.max())
           plt.plot(gfp_bin_centres, gfp_hist, label='gfp')
 
           # save plot
