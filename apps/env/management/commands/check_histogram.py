@@ -110,7 +110,7 @@ class Command(BaseCommand):
           plt.xlabel('intensity')
           plt.ylabel('normalised frequency')
           plt.title('intensity histogram for %s > %s' % (e.name, str(s.index)))
-          plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_%d.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
+          plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
           plt.clf()
 
         # normalise
