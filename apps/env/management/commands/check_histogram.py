@@ -127,19 +127,6 @@ class Command(BaseCommand):
           plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
           plt.clf()
 
-        # normalise
-        bf_mean = list(np.array(bf_mean) / np.max(bf_mean))
-        gfp_mean = list(np.array(gfp_mean) / np.max(gfp_mean))
-
-        # save for series
-        plt.plot(time, bf_mean, label='bf')
-        plt.plot(time, gfp_mean, label='gfp')
-
-        plot_path = os.path.join(base_output_path, e.name, str(s.index), 'intensity_masked.png')
-        plt.legend()
-        plt.savefig(plot_path)
-        plt.clf()
-
 class CellInstance():
   def __init__(self, experiment, series, line):
     m = re.match(r'[0-9]+ (?P<id>[0-9]+) (?P<frame>[0-9]+) (?P<x>[0-9]+) (?P<y>[0-9]+) [-+]?[0-9]*\.?[0-9]+ [-+]?[0-9]*\.?[0-9]+ [0-9]+', line)
