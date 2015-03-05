@@ -122,7 +122,7 @@ class Command(BaseCommand):
           plt.xlim([0,1])
           plt.ylabel('normalised frequency')
           # plt.title('GFP intensity histogram for %s > %s' % (e.name, str(s.index)))
-          plt.title('intensity histogram for %s > %s' % (e.name, str(s.index)))
+          plt.title('intensity histogram for %s, series %s at frame %d' % (e.name, str(s.index), int(t.index)))
           # plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_gfp_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
           plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
           plt.clf()
