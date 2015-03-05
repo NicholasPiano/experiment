@@ -20,7 +20,6 @@ import numpy as np
 from scipy.misc import imsave
 from scipy.ndimage.morphology import binary_dilation as dilate
 import matplotlib.pyplot as plt
-from skimage import exposure, filter
 
 class Command(BaseCommand):
   args = '<none>'
@@ -47,7 +46,7 @@ class Command(BaseCommand):
           os.mkdir(os.path.join(base_output_path, e.name, str(s.index)))
 
         # get image
-        series_image = s.experiment.images.filter(series=s, channel=1, focus=0, timestep__index=0)
+        series_image = s.experiment.images.get(series=s, channel=1, focus=0, timestep__index=0)
         series_image.load()
 
         # load tracks file
@@ -58,11 +57,12 @@ class Command(BaseCommand):
               cell_instances.append(CellInstance(e.name, str(s.index), ' '.join(line.rstrip().split('\t'))))
 
         # loop through timesteps
+        all_timestep_indices = [t.index for t in s.timesteps.order_by('index')]
         for t in s.timesteps.order_by('index'):
           print('%s %d %d'%(e.name, s.index, t.index))
 
           # cell instances at timestep
-          ci = filter(lambda c: c.frame==int(t.index)+1, cell_instances)
+          ci = filter(lambda c: c.frame==all_timestep_indices.index(t.index)+1, cell_instances)
 
           # make black field
           b = np.zeros(series_image.array.shape)
@@ -70,7 +70,7 @@ class Command(BaseCommand):
           for cell_instance in ci:
             # draw circle
             xx, yy = np.mgrid[:b.shape[0], :b.shape[1]]
-            circle = (xx - c.row) ** 2 + (yy - c.column) ** 2 # distance from c
+            circle = (xx - cell_instance.row) ** 2 + (yy - cell_instance.column) ** 2 # distance from c
             b[circle<10] = 255 # radius of 10 px
 
           # save

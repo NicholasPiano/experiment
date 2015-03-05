@@ -1,5 +1,5 @@
 '''
-Checks tracks visually by superimposing track markers onto the brightfield images.
+Checks intensity variations in brightfield and gfp images.
 
 '''
 
@@ -24,8 +24,7 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    base_input_path = '/Volumes/transport/data/cp/centre-ij/tracks'
-    base_output_path = '/Volumes/transport/data/cp/centre-ij/check-bf'
+    base_output_path = '/Volumes/transport/data/cp/centre-ij/intensity'
 
     # make directory
     if not os.path.exists(base_output_path):
@@ -43,43 +42,50 @@ class Command(BaseCommand):
         if not os.path.exists(os.path.join(base_output_path, e.name, str(s.index))):
           os.mkdir(os.path.join(base_output_path, e.name, str(s.index)))
 
-        # get image
-        bf = s.experiment.images.filter(series=s, channel=1, focus__lt=40, focus__gt=30)
+        # get images
+        bf = s.experiment.images.filter(series=s, channel=1)
+        gfp = s.experiment.images.filter(series=s, channel=0)
 
-        # load tracks file
-        cell_instances = []
-        with open(os.path.join(base_input_path, e.name, str(s.index), 'tracks.xls')) as tracks_file:
-          for line in tracks_file.readlines():
-            if int('0' + line.split('\t')[0])>0:
-              cell_instances.append(CellInstance(e.name, str(s.index), ' '.join(line.rstrip().split('\t'))))
+        # data
+        time = []
+        bf_mean = []
+        gfp_mean = []
 
         # loop through timesteps
-        all_timestep_indices = [t.index for t in s.timesteps.order_by('index')]
         for t in s.timesteps.order_by('index'):
+          time.append(t.index)
           print('%s %d %d'%(e.name, s.index, t.index))
 
-          # cell instances at timestep
-          ci = filter(lambda c: c.frame==all_timestep_indices.index(t.index)+1, cell_instances)
-
-          # make black field
-          bf_t_stack = bf.filter(timestep=t)
-          bf_t1 = bf_t_stack[0]
-          bf_t1.load()
-          b = np.zeros(bf_t1.array.shape)
-
           #compile mean bf
-          for bf_ti in bf_t_stack:
-            bf_ti.load()
-            b += bf_ti.array / float(len(bf_t_stack))
+          bf_t = bf.filter(timestep=t)
+          bf_mean_t = 0
+          for bf_i in bf_t:
+            bf_i.load()
+            bf_mean_t += bf_i.array.mean() / float(len(bf_t))
 
-          for cell_instance in ci:
-            # draw circle
-            xx, yy = np.mgrid[:b.shape[0], :b.shape[1]]
-            circle = (xx - cell_instance.row) ** 2 + (yy - cell_instance.column) ** 2 # distance from c
-            b[circle<10] = 255 # radius of 10 px
+          bf_mean.append(bf_mean_t)
 
-          # save
-          imsave(os.path.join(base_output_path, e.name, str(s.index), 'tracks_t%s.tif'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))), b)
+          #compile mean gfp
+          gfp_t = gfp.filter(timestep=t)
+          gfp_mean_t = 0
+          for gfp_i in gfp_t:
+            gfp_i.load()
+            gfp_mean_t += gfp_i.array.mean() / float(len(gfp_t))
+
+          gfp_mean.append(gfp_mean_t)
+
+        # normalise
+        bf_mean = list(np.array(bf_mean) / np.max(bf_mean))
+        gfp_mean = list(np.array(gfp_mean) / np.max(gfp_mean))
+
+        # save for series
+        plt.plot(time, bf_mean, label='bf')
+        plt.plot(time, gfp_mean, label='gfp')
+
+        plot_path = os.path.join(base_output_path, e.name, str(s.index), 'intensity.png')
+        plt.legend()
+        plt.savefig(plot_path)
+        plt.clf()
 
 class CellInstance():
   def __init__(self, experiment, series, line):
