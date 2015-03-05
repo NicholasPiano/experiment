@@ -90,6 +90,14 @@ class Command(BaseCommand):
           bf_hist /= bf_hist.max()
           plt.plot(bf_bin_centres, bf_hist, label='bf')
 
+          # save plot
+          plt.legend()
+          plt.xlabel('BF intensity')
+          plt.ylabel('normalised frequency')
+          plt.title('BF intensity histogram for %s > %s' % (e.name, str(s.index)))
+          plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_bf_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
+          plt.clf()
+
           # compile mean gfp
           gfp_t = gfp.filter(timestep=t)
           gfp_mean_image = np.zeros(series_image.array.shape)
@@ -107,10 +115,10 @@ class Command(BaseCommand):
 
           # save plot
           plt.legend()
-          plt.xlabel('intensity')
+          plt.xlabel('GFP intensity')
           plt.ylabel('normalised frequency')
-          plt.title('intensity histogram for %s > %s' % (e.name, str(s.index)))
-          plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
+          plt.title('GFP intensity histogram for %s > %s' % (e.name, str(s.index)))
+          plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_gfp_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
           plt.clf()
 
         # normalise
