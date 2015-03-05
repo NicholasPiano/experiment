@@ -89,7 +89,7 @@ class Command(BaseCommand):
           bf_hist, bf_bin_edges = np.histogram(bf_mean_image, bins=100)
           bf_bin_centres = 0.5*(bf_bin_edges[1:]+bf_bin_edges[:-1])
           bf_hist = np.array(bf_hist, dtype=float) / float(bf_hist.max())
-          plt.plot(bf_bin_centres, exposure.rescale_intensity(bf_hist), label='bf')
+          plt.plot(exposure.rescale_intensity(bf_bin_centres), bf_hist, label='bf')
 
           # save plot
           # plt.legend()
@@ -113,7 +113,7 @@ class Command(BaseCommand):
           gfp_hist, gfp_bin_edges = np.histogram(gfp_mean_image, bins=100)
           gfp_bin_centres = 0.5*(gfp_bin_edges[1:]+gfp_bin_edges[:-1])
           gfp_hist = np.array(gfp_hist, dtype=float) / float(gfp_hist.max())
-          plt.plot(gfp_bin_centres, exposure.rescale_intensity(gfp_hist), label='gfp')
+          plt.plot(exposure.rescale_intensity(gfp_bin_centres), gfp_hist, label='gfp')
 
           # save plot
           plt.legend()
