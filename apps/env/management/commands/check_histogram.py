@@ -62,7 +62,6 @@ class Command(BaseCommand):
         # loop through timesteps
         # all_timestep_indices = [t.index for t in s.timesteps.order_by('index')]
         for t in s.timesteps.order_by('index'):
-          time.append(t.index)
           print('%s %d %d'%(e.name, s.index, t.index))
 
           # make mask
