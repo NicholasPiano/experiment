@@ -18,6 +18,7 @@ import numpy as np
 from scipy.misc import imsave
 from scipy.ndimage.morphology import binary_dilation as dilate
 import matplotlib.pyplot as plt
+from skimage import exposure
 
 class Command(BaseCommand):
   args = '<none>'
@@ -88,16 +89,16 @@ class Command(BaseCommand):
           bf_hist, bf_bin_edges = np.histogram(bf_mean_image, bins=100)
           bf_bin_centres = 0.5*(bf_bin_edges[1:]+bf_bin_edges[:-1])
           bf_hist = np.array(bf_hist, dtype=float) / float(bf_hist.max())
-          plt.plot(bf_bin_centres, bf_hist, label='bf')
+          plt.plot(bf_bin_centres, exposure.rescale_intensity(bf_hist), label='bf')
 
           # save plot
-          plt.legend()
-          plt.xlabel('BF intensity')
-          plt.xlim([0,255])
-          plt.ylabel('normalised frequency')
-          plt.title('BF intensity histogram for %s > %s' % (e.name, str(s.index)))
-          plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_bf_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
-          plt.clf()
+          # plt.legend()
+          # plt.xlabel('BF intensity')
+          # plt.xlim([0,255])
+          # plt.ylabel('normalised frequency')
+          # plt.title('BF intensity histogram for %s > %s' % (e.name, str(s.index)))
+          # plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_bf_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
+          # plt.clf()
 
           # compile mean gfp
           gfp_t = gfp.filter(timestep=t)
@@ -112,15 +113,18 @@ class Command(BaseCommand):
           gfp_hist, gfp_bin_edges = np.histogram(gfp_mean_image, bins=100)
           gfp_bin_centres = 0.5*(gfp_bin_edges[1:]+gfp_bin_edges[:-1])
           gfp_hist = np.array(gfp_hist, dtype=float) / float(gfp_hist.max())
-          plt.plot(gfp_bin_centres, gfp_hist, label='gfp')
+          plt.plot(gfp_bin_centres, exposure.rescale_intensity(gfp_hist), label='gfp')
 
           # save plot
           plt.legend()
-          plt.xlabel('GFP intensity')
-          plt.xlim([0,50])
+          # plt.xlabel('GFP intensity')
+          plt.xlabel('intensity')
+          plt.xlim([0,1])
           plt.ylabel('normalised frequency')
-          plt.title('GFP intensity histogram for %s > %s' % (e.name, str(s.index)))
-          plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_gfp_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
+          # plt.title('GFP intensity histogram for %s > %s' % (e.name, str(s.index)))
+          plt.title('intensity histogram for %s > %s' % (e.name, str(s.index)))
+          # plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_gfp_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
+          plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_%s.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
           plt.clf()
 
         # normalise
