@@ -24,6 +24,7 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
+    base_input_path = '/Volumes/transport/data/cp/centre-ij/tracks'
     base_output_path = '/Volumes/transport/data/cp/centre-ij/intensity'
 
     # make directory
