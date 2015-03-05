@@ -45,7 +45,7 @@ class Command(BaseCommand):
         # get images
         bf = s.experiment.images.filter(series=s, channel=1)
         gfp = s.experiment.images.filter(series=s, channel=0)
-        series_image = s.experiment.images.filter(series=s, channel=0, timestep__index=0, focus=0)
+        series_image = s.experiment.images.get(series=s, channel=0, timestep__index=0, focus=0)
         series_image.load()
 
         # data
