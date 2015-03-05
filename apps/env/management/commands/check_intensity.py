@@ -45,32 +45,55 @@ class Command(BaseCommand):
         # get images
         bf = s.experiment.images.filter(series=s, channel=1)
         gfp = s.experiment.images.filter(series=s, channel=0)
+        series_image = s.experiment.images.filter(series=s, channel=0, timestep__index=0, focus=0)
+        series_image.load()
 
         # data
         time = []
         bf_mean = []
         gfp_mean = []
 
+        # get cells
+        cell_instances = []
+        with open(os.path.join(base_input_path, e.name, str(s.index), 'tracks.xls')) as tracks_file:
+          for line in tracks_file.readlines():
+            if int('0' + line.split('\t')[0])>0:
+              cell_instances.append(CellInstance(e.name, str(s.index), ' '.join(line.rstrip().split('\t'))))
+
         # loop through timesteps
+        all_timestep_indices = [t.index for t in s.timesteps.order_by('index')]
         for t in s.timesteps.order_by('index'):
           time.append(t.index)
           print('%s %d %d'%(e.name, s.index, t.index))
 
-          #compile mean bf
+          # make mask
+          ci = filter(lambda c: c.frame==all_timestep_indices.index(t.index)+1, cell_instances)
+
+          cell_mask = np.ones(series_image.array.shape, dtype=bool)
+
+          for cell_instance in ci:
+            # draw circle
+            xx, yy = np.mgrid[:cell_mask.shape[0], :cell_mask.shape[1]]
+            circle = (xx - cell_instance.row) ** 2 + (yy - cell_instance.column) ** 2 # distance from c
+            cell_mask[circle<20] = False # radius of 20 px
+
+          # compile mean bf
           bf_t = bf.filter(timestep=t)
           bf_mean_t = 0
           for bf_i in bf_t:
             bf_i.load()
-            bf_mean_t += bf_i.array.mean() / float(len(bf_t))
+            masked_bf = np.ma.array(bf_i.array, mask=cell_mask)
+            bf_mean_t += masked_bf.mean() / float(len(bf_t))
 
           bf_mean.append(bf_mean_t)
 
-          #compile mean gfp
+          # compile mean gfp
           gfp_t = gfp.filter(timestep=t)
           gfp_mean_t = 0
           for gfp_i in gfp_t:
             gfp_i.load()
-            gfp_mean_t += gfp_i.array.mean() / float(len(gfp_t))
+            masked_gfp = np.ma.array(gfp_i.array, mask=cell_mask)
+            gfp_mean_t += masked_gfp.mean() / float(len(gfp_t))
 
           gfp_mean.append(gfp_mean_t)
 
@@ -82,7 +105,7 @@ class Command(BaseCommand):
         plt.plot(time, bf_mean, label='bf')
         plt.plot(time, gfp_mean, label='gfp')
 
-        plot_path = os.path.join(base_output_path, e.name, str(s.index), 'intensity.png')
+        plot_path = os.path.join(base_output_path, e.name, str(s.index), 'intensity_masked.png')
         plt.legend()
         plt.savefig(plot_path)
         plt.clf()
