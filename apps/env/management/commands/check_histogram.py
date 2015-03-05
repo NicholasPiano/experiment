@@ -43,16 +43,14 @@ class Command(BaseCommand):
         if not os.path.exists(os.path.join(base_output_path, e.name, str(s.index))):
           os.mkdir(os.path.join(base_output_path, e.name, str(s.index)))
 
+        if not os.path.exists(os.path.join(base_output_path, e.name, str(s.index), 'histograms')):
+          os.mkdir(os.path.join(base_output_path, e.name, str(s.index), 'histograms'))
+
         # get images
         bf = s.experiment.images.filter(series=s, channel=1)
         gfp = s.experiment.images.filter(series=s, channel=0)
         series_image = s.experiment.images.get(series=s, channel=0, timestep__index=0, focus=0)
         series_image.load()
-
-        # data
-        time = []
-        bf_mean = []
-        gfp_mean = []
 
         # get cells
         # cell_instances = []
@@ -80,25 +78,41 @@ class Command(BaseCommand):
 
           # compile mean bf
           bf_t = bf.filter(timestep=t)
-          bf_mean_t = 0
+          bf_mean_image = np.zeros(series_image.array.shape)
           for bf_i in bf_t:
             bf_i.load()
             # masked_bf = np.ma.array(bf_i.array, mask=cell_mask)
             # bf_mean_t += masked_bf.mean() / float(len(bf_t))
-            bf_mean_t += bf_i.array.mean() / float(len(bf_t))
+            bf_mean_image += bf_i.array / float(len(bf_t))
 
-          bf_mean.append(bf_mean_t)
+          # histogram bf
+          bf_hist, bf_bin_edges = np.histogram(bf_mean_image, bins=100)
+          bf_bin_centres = 0.5*(bf_bin_edges[1:]+bf_bin_edges[:-1])
+          bf_hist /= bf_hist.max()
+          plt.plot(bf_bin_centres, bf_hist, label='bf')
 
           # compile mean gfp
           gfp_t = gfp.filter(timestep=t)
-          gfp_mean_t = 0
+          gfp_mean_image = np.zeros(series_image.array.shape)
           for gfp_i in gfp_t:
             gfp_i.load()
             # masked_gfp = np.ma.array(gfp_i.array, mask=cell_mask)
             # gfp_mean_t += masked_gfp.mean() / float(len(gfp_t))
-            gfp_mean_t += gfp_i.array.mean() / float(len(gfp_t))
+            gfp_mean_image += gfp_i.array / float(len(gfp_t))
 
-          gfp_mean.append(gfp_mean_t)
+          # histogram gfp
+          gfp_hist, gfp_bin_edges = np.histogram(gfp_mean_image, bins=100)
+          gfp_bin_centres = 0.5*(gfp_bin_edges[1:]+gfp_bin_edges[:-1])
+          gfp_hist /= gfp_hist.max()
+          plt.plot(gfp_bin_centres, gfp_hist, label='gfp')
+
+          # save plot
+          plt.legend()
+          plt.xlabel('intensity')
+          plt.ylabel('normalised frequency')
+          plt.title('intensity histogram for %s > %s' % (e.name, str(s.index)))
+          plt.savefig(os.path.join(base_output_path, e.name, str(s.index), 'histograms', 'hist_%d.png'%(('00' if int(t.index)<10 else ('0' if int(t.index)<100 else '')) + str(t.index))))
+          plt.clf()
 
         # normalise
         bf_mean = list(np.array(bf_mean) / np.max(bf_mean))
@@ -110,9 +124,6 @@ class Command(BaseCommand):
 
         plot_path = os.path.join(base_output_path, e.name, str(s.index), 'intensity_masked.png')
         plt.legend()
-        plt.xlabel('frame')
-        plt.ylabel('normalised mean intensity')
-        plt.title('normalised mean intensity for %s > %s' % (e.name, str(s.index)))
         plt.savefig(plot_path)
         plt.clf()
 
