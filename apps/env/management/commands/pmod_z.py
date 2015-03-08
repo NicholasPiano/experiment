@@ -142,7 +142,7 @@ class Command(BaseCommand):
               # primary objects
               black_field = np.zeros(series_image.array.shape)
 
-              for cell_instance in filter(lambda x: x.c==cl, ci):
+              for cell_instance in ci:
                 # draw circle
                 xx, yy = np.mgrid[:black_field.shape[0], :black_field.shape[1]]
                 circle = (xx - cell_instance.row) ** 2 + (yy - cell_instance.column) ** 2 # distance from c
