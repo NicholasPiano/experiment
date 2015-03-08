@@ -33,7 +33,7 @@ class Command(BaseCommand):
     if not os.path.exists(base_output_path):
       os.mkdir(base_output_path)
 
-    for e in Experiment.objects.all():
+    for e in Experiment.objects.filter(name='260714'):
 
       # make directory
       if not os.path.exists(os.path.join(base_output_path, e.name)):
