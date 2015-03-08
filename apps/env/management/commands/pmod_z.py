@@ -104,52 +104,53 @@ class Command(BaseCommand):
               if cell_instance.c is None and cell_instance.z >= c*5 and cell_instance.z < (c+1)*5:
                 cell_instance.c = c
 
-          for cl in np.unique([c.c for c in ci]) if len(ci)!=0: # for each unique level class
-            # take 5 layers of bf and 10 layers of gfp
-            # take bf max
-            # take gfp sum
-            # multiply
+          if len(ci)!=0:
+            for cl in np.unique([c.c for c in ci]): # for each unique level class
+              # take 5 layers of bf and 10 layers of gfp
+              # take bf max
+              # take gfp sum
+              # multiply
 
-            bf_min, bf_max = cl*5, (cl+1)*5
-            gfp_min, gfp_max = (0 if cl-2<0 else cl-2)*5, (cl+2)*5 if (cl+2)*5<gfp_t.count() else gfp_t.count()
+              bf_min, bf_max = cl*5, (cl+1)*5
+              gfp_min, gfp_max = (0 if cl-2<0 else cl-2)*5, (cl+2)*5 if (cl+2)*5<gfp_t.count() else gfp_t.count()
 
-            # make images
-            bf_stack = bf.filter(timestep=t, focus__gte=bf_min, focus__lte=bf_max)
-            gfp_stack = gfp_t.filter(focus__gte=gfp_min, focus__lte=gfp_max)
+              # make images
+              bf_stack = bf.filter(timestep=t, focus__gte=bf_min, focus__lte=bf_max)
+              gfp_stack = gfp_t.filter(focus__gte=gfp_min, focus__lte=gfp_max)
 
-            bf_max_proj = np.zeros(series_image.array.shape)
-            for b in bf_stack:
-              b.load()
-              bf_max_proj[bf_max_proj < b.array] = b.array[bf_max_proj < b.array]
+              bf_max_proj = np.zeros(series_image.array.shape)
+              for b in bf_stack:
+                b.load()
+                bf_max_proj[bf_max_proj < b.array] = b.array[bf_max_proj < b.array]
 
-            gfp_sum_proj = np.zeros(series_image.array.shape)
-            for g in gfp_stack:
-              g.load()
-              gfp_sum_proj += g.array
+              gfp_sum_proj = np.zeros(series_image.array.shape)
+              for g in gfp_stack:
+                g.load()
+                gfp_sum_proj += g.array
 
-            gfp_threshold = exposure.equalize_hist(gfp_sum_proj)
-            gfp_threshold[gfp_sum_proj<gfp_sum_proj.mean()] = 0
+              gfp_threshold = exposure.equalize_hist(gfp_sum_proj)
+              gfp_threshold[gfp_sum_proj<gfp_sum_proj.mean()] = 0
 
-            gfp_smooth = ft.gaussian_filter(gfp_threshold, sigma=5)
+              gfp_smooth = ft.gaussian_filter(gfp_threshold, sigma=5)
 
-            # save output
-            output_image = gfp_smooth * bf_max_proj
-            sec_image_path = os.path.join(base_output_path, e.name, str(s.index), 'secondary_t%s_cl%d.tif'%((len(str(s.timesteps.count()))-len(str(t.index)))*'0' + str(t.index), cl))
+              # save output
+              output_image = gfp_smooth * bf_max_proj
+              sec_image_path = os.path.join(base_output_path, e.name, str(s.index), 'secondary_t%s_cl%d.tif'%((len(str(s.timesteps.count()))-len(str(t.index)))*'0' + str(t.index), cl))
 
-            imsave(sec_image_path, output_image)
+              imsave(sec_image_path, output_image)
 
-            # primary objects
-            black_field = np.zeros(series_image.array.shape)
+              # primary objects
+              black_field = np.zeros(series_image.array.shape)
 
-            for cell_instance in filter(lambda x: x.c==cl, ci):
-              # draw circle
-              xx, yy = np.mgrid[:black_field.shape[0], :black_field.shape[1]]
-              circle = (xx - cell_instance.row) ** 2 + (yy - cell_instance.column) ** 2 # distance from c
-              black_field[circle<15] = 255 # radius of 10 px
+              for cell_instance in filter(lambda x: x.c==cl, ci):
+                # draw circle
+                xx, yy = np.mgrid[:black_field.shape[0], :black_field.shape[1]]
+                circle = (xx - cell_instance.row) ** 2 + (yy - cell_instance.column) ** 2 # distance from c
+                black_field[circle<15] = 255 # radius of 10 px
 
-            pri_image_path = os.path.join(base_output_path, e.name, str(s.index), 'primary_t%s_cl%d.tif'%((len(str(s.timesteps.count()))-len(str(t.index)))*'0' + str(t.index), cl))
+              pri_image_path = os.path.join(base_output_path, e.name, str(s.index), 'primary_t%s_cl%d.tif'%((len(str(s.timesteps.count()))-len(str(t.index)))*'0' + str(t.index), cl))
 
-            imsave(pri_image_path, black_field)
+              imsave(pri_image_path, black_field)
 
 class CellInstance():
   def __init__(self, experiment, series, line):
