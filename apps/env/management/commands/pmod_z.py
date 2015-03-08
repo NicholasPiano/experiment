@@ -104,7 +104,7 @@ class Command(BaseCommand):
               if cell_instance.c is None and cell_instance.z >= c*5 and cell_instance.z < (c+1)*5:
                 cell_instance.c = c
 
-          for cl in np.unique([c.c for c in ci]): # for each unique level class
+          for cl in np.unique([c.c for c in ci]) if len(ci)!=0: # for each unique level class
             # take 5 layers of bf and 10 layers of gfp
             # take bf max
             # take gfp sum
