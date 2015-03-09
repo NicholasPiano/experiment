@@ -6,29 +6,31 @@ from django.conf import settings
 
 # local
 from apps.env import algorithms
+from apps.img.models import Series
 
 # util
 import os
 
 # vars
-pipeline_path = os.path.join(settings.DATA_DIR, 'cp')
+ij = 'ij-input'
+cp = 'cp-input'
 
 ### Run
 class Preprocess(models.Model):
 
   # properties
   name = models.CharField(max_length=255)
+  category = models.CharField(max_length=255) #ij-tracking, cp-input
   algorithm = models.CharField(max_length=255)
-  output_path = models.CharField(max_length=255)
 
   # methods
-  def process(self):
-    self.output_path = os.path.join(pipeline_path, self.name)
-    self.save()
-
   def run(self):
+    # make folders
+
+
+
     # get algorithm
     algorithm = getattr(algorithms, self.algorithm)
 
     # run
-    algorithm(output_path=self.output_path, name=self.name)
+    algorithm(name=self.name, category=self.category)

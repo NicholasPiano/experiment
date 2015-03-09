@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-DATA_PATH = os.path.join('/','Volumes','transport','data','cp','full-tracking')
+DATA_DIR = os.path.join('/','Volumes','transport','data','cp','full-tracking')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
@@ -37,9 +37,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'apps.env',
-    'apps.image',
+    'apps.img',
     'apps.cell',
-    'apps.plot',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -59,6 +58,7 @@ WSGI_APPLICATION = 'experiment.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
+DATABASE_PWD = os.environ.get('DB_PWD')
 
 DATABASES = {
   'default': {

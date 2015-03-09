@@ -2,12 +2,14 @@
 
 # django
 from django.db import models
+from django.conf import settings
 
 # local
 from apps.env.models import *
 
 # util
 import re
+import os
 from scipy.misc import imread, imsave
 import numpy as np
 
@@ -16,6 +18,11 @@ image_channels = {
   0:'gfp',
   1:'bf',
 }
+
+base_path = settings.DATA_DIR
+img_path = 'img'
+cell_path = 'cells'
+plot_path = 'plots'
 
 ### Region
 class Region(models.Model):
@@ -31,11 +38,6 @@ class Experiment(models.Model):
   # properties
   name = models.CharField(max_length=255)
 
-  # paths
-  base_path = models.CharField(max_length=255)
-  input_path = models.CharField(default=os.path.join('backup','backup'), max_length=255) #appended to base_path
-  plot_path = models.CharField(default='plot', max_length=255)
-
   # scaling
   rmop = models.FloatField(default=0.0)
   cmop = models.FloatField(default=0.0)
@@ -47,10 +49,42 @@ class Experiment(models.Model):
   tpf = models.FloatField(default=0.0) # time per frame
 
   # methods
-  def input(self):
+  def path(self, path):
+    return os.path.join(base_path, self.name, path)
+
+  def input_images(self):
     # search input folder for images not currently added
+    # 1. get list of files
+    input_path = self.path(img_path)
+    print(input_path)
+    # file_list = [image_file_name for image_file_name in os.listdir(input_path) if re.search(r'\.ti[f]{1,2}$', image_file_name) is not None]
+    # template = self.image_templates.get(name='input')
+    #
+    # # 2. extract details from each file_name and get or create objects
+    # for file_name in file_list:
+    #   match = template.match(file_name)
+    #
+    #   series_index = int(match.group('series'))+1
+    #   frame_index = match.group('frame')
+    #   channel_index = int(match.group('channel'))
+    #   focus = int(match.group('focus'))
+    #
+    #   # get details and create image
+    #   series = self.series.get(index=series_index)
+    #   channel = self.channels.get(series=series, index=channel_index)
+    #   frame = self.timesteps.get(series=series, index=frame_index)
+    #   image, created = self.images.get_or_create(file_name=file_name, input_path=input_path, series=series, frame=frame, channel=channel, level=level)
+    #
+    #   if created:
+    #     print('processing input ... ' + file_name + (' (created)' if created else ''))
+    #   else:
+    #     print('skipping unneeded image file ... ' + file_name)
+
+  def input_cells(self):
+    # search cell folder and read lines of csv tracking files
 
     #
+    pass
 
 ### Series
 class Series(models.Model):
@@ -62,10 +96,10 @@ class Series(models.Model):
   index = models.IntegerField(default=0)
 
   # limits
-  channels = models.IntegerField(default=0)
-  frames = models.IntegerField(default=0)
+  max_channels = models.IntegerField(default=0)
+  max_frames = models.IntegerField(default=0)
   rows = models.IntegerField(default=0)
-  columns = IntegerField(default=0)
+  columns = models.IntegerField(default=0)
   levels = models.IntegerField(default=0)
 
   # methods
@@ -77,8 +111,8 @@ class Series(models.Model):
 class Channel(models.Model):
 
   # connections
-  experiment = models.ForeignKey(Experiment, related_name='timesteps')
-  series = models.ForeignKey(Series, related_name='timesteps')
+  experiment = models.ForeignKey(Experiment, related_name='channels')
+  series = models.ForeignKey(Series, related_name='channels')
 
   # properties
   index = models.IntegerField(default=0)
@@ -88,8 +122,8 @@ class Channel(models.Model):
 class Frame(models.Model):
 
   # connections
-  experiment = models.ForeignKey(Experiment, related_name='timesteps')
-  series = models.ForeignKey(Series, related_name='timesteps')
+  experiment = models.ForeignKey(Experiment, related_name='frames')
+  series = models.ForeignKey(Series, related_name='frames')
 
   # properties
   index = models.IntegerField(default=0)
@@ -136,6 +170,7 @@ class Image(models.Model):
     # load image
 
     # store properties
+    pass
 
 ### ImageTemplate
 class ImageTemplate(models.Model):

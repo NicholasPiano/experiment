@@ -4,7 +4,7 @@
 from django.db import models
 
 # local
-from apps.env.models import *
+from apps.img.models import *
 
 ### Cell
 class Cell(models.Model):
@@ -43,7 +43,7 @@ class CellInstance(models.Model):
   area = models.IntegerField(default=0)
 
   # methods
-  
+
 
 ### Extension
 class Extension(models.Model):

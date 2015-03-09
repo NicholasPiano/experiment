@@ -2,6 +2,7 @@
 #script stores prototype data for constructing experiment and region objects
 
 #django
+from django.conf import settings
 
 #local
 
@@ -16,9 +17,8 @@ class Region():
     self.description = description
 
 class Experiment():
-  def __init__(self, name, base_path, rmop, cmop, zmop, tpf):
+  def __init__(self, name, rmop, cmop, zmop, tpf):
     self.name = name
-    self.base_path = base_path
     self.rmop = rmop
     self.cmop = cmop
     self.zmop = zmop
@@ -44,9 +44,9 @@ regions = [
 ]
 
 experiments = [
-  Experiment(name='050714', base_path=os.path.join('/','Volumes','transport','data','confocal','050714'), rmop=0.5369, cmop=0.5369, zmop=1.482, tpf=10.7003),
-  Experiment(name='190714', base_path=os.path.join('/','Volumes','transport','data','confocal','190714'), rmop=0.501, cmop=0.5015, zmop=1.482, tpf=9.7408),
-  Experiment(name='260714', base_path=os.path.join('/','Volumes','transport','data','confocal','260714'), rmop=0.5696074, cmop=0.5701647, zmop=1.482, tpf=7.6807),
+  Experiment(name='050714', rmop=0.5369, cmop=0.5369, zmop=1.482, tpf=10.7003),
+  Experiment(name='190714', rmop=0.501, cmop=0.5015, zmop=1.482, tpf=9.7408),
+  Experiment(name='260714', rmop=0.5696074, cmop=0.5701647, zmop=1.482, tpf=7.6807),
 ]
 
 series = [
