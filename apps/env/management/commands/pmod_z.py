@@ -60,7 +60,7 @@ class Command(BaseCommand):
 
         # loop through timesteps
         all_timestep_indices = [t.index for t in s.timesteps.order_by('index')]
-        for t in s.timesteps.order_by('index'):
+        for t in s.timesteps.order_by('index').filter(index=113):
           print('%s %d %d'%(e.name, s.index, t.index))
 
           # cell instances at timestep
@@ -103,6 +103,8 @@ class Command(BaseCommand):
             for cell_instance in ci:
               if cell_instance.c is None and cell_instance.z >= c*5 and cell_instance.z < (c+1)*5:
                 cell_instance.c = c
+
+          print([c.c for c in ci])
 
           if len(ci)!=0:
             for cl in np.unique([c.c for c in ci]): # for each unique level class
