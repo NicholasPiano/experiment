@@ -11,8 +11,8 @@ import os
 ### Classes
 class Region():
   def __init__(self, name, index, description):
-    self.name = name
     self.index = index
+    self.name = name
     self.description = description
 
 class Experiment():
@@ -37,10 +37,10 @@ class Template():
 
 ### Data
 regions = [
-  Region(name='medium', index=1, description='Cells in the medium not connected to any endothelial cells or PDMS boundaries.'),
-  Region(name='barrier_boundary', index=2, description='Cells immediately adjacent to the front edge of the barrier without any full contact with endothelial cells.'),
-  Region(name='barrier_embedded', index=3, description='Cells fully embedded in the barrier. In contact with endothelial cells on all sides.'),
-  Region(name='gel', index=4, description='Cells in the gel not connected to any endothelial cells or PDMS boundaries.'),
+  Region(index=1, name='medium', description='Cells in the medium not connected to any endothelial cells or PDMS boundaries.'),
+  Region(index=2, name='barrier_boundary', description='Cells immediately adjacent to the front edge of the barrier without any full contact with endothelial cells.'),
+  Region(index=3, name='barrier_embedded', description='Cells fully embedded in the barrier. In contact with endothelial cells on all sides.'),
+  Region(index=4, name='gel', description='Cells in the gel not connected to any endothelial cells or PDMS boundaries.'),
 ]
 
 experiments = [

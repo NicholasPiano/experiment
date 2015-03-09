@@ -1,15 +1,21 @@
-#apps.image.models
+# apps.image.models
 
-#django
+# django
 from django.db import models
 
-#local
+# local
 from apps.env.models import *
 
-#util
+# util
 import re
 from scipy.misc import imread, imsave
 import numpy as np
+
+# vars
+image_channels = {
+  0:'gfp',
+  1:'bf',
+}
 
 ### Region
 class Region(models.Model):
