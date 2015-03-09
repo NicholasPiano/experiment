@@ -61,10 +61,14 @@ WSGI_APPLICATION = 'experiment.wsgi.application'
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db', 'db.sqlite3'),
-    }
+  'default': {
+    'ENGINE': 'mysql.connector.django',
+    'NAME': 'experiment_default',
+    'USER': 'nicholas',
+    'PASSWORD': DATABASE_PWD,
+    'HOST': '',
+    'PORT': '',
+  }
 }
 
 # Internationalization
