@@ -53,32 +53,42 @@ class Experiment(models.Model):
     return os.path.join(base_path, self.name, path)
 
   def input_images(self):
+    print('image input for experiment %s:'%self.name)
     # search input folder for images not currently added
     # 1. get list of files
     input_path = self.path(img_path)
-    print(input_path)
-    # file_list = [image_file_name for image_file_name in os.listdir(input_path) if re.search(r'\.ti[f]{1,2}$', image_file_name) is not None]
-    # template = self.image_templates.get(name='input')
-    #
-    # # 2. extract details from each file_name and get or create objects
-    # for file_name in file_list:
-    #   match = template.match(file_name)
-    #
-    #   series_index = int(match.group('series'))+1
-    #   frame_index = match.group('frame')
-    #   channel_index = int(match.group('channel'))
-    #   focus = int(match.group('focus'))
-    #
-    #   # get details and create image
-    #   series = self.series.get(index=series_index)
-    #   channel = self.channels.get(series=series, index=channel_index)
-    #   frame = self.timesteps.get(series=series, index=frame_index)
-    #   image, created = self.images.get_or_create(file_name=file_name, input_path=input_path, series=series, frame=frame, channel=channel, level=level)
-    #
-    #   if created:
-    #     print('processing input ... ' + file_name + (' (created)' if created else ''))
-    #   else:
-    #     print('skipping unneeded image file ... ' + file_name)
+    file_list = [image_file_name for image_file_name in os.listdir(input_path) if re.search(r'\.ti[f]{1,2}$', image_file_name) is not None]
+    template = self.image_templates.get(name='input')
+
+    # 2. extract details from each file_name and get or create objects
+    skipped = 0
+    files = len(file_list)
+    for i, file_name in enumerate(file_list):
+      match = template.match(file_name)
+
+      series_index = int(match.group('series'))+1
+      frame_index = match.group('frame')
+      channel_index = int(match.group('channel'))
+      level = int(match.group('level'))
+
+      # get details and create image
+      if self.series.filter(index=series_index).count()!=0:
+        series = self.series.get(index=series_index)
+        channel, channel_created = self.channels.get_or_create(series=series, index=channel_index)
+        if channel_created:
+          channel.name = image_channels[channel.index]
+          channel.save()
+        frame, frame_created = self.frames.get_or_create(series=series, index=frame_index)
+        image, created = self.images.get_or_create(file_name=file_name, input_path=input_path, series=series, frame=frame, channel=channel, level=level)
+
+        if created:
+          image.process()
+        else:
+          skipped += 1
+      else:
+        skipped += 1
+
+      print('image input, %d skipped, processing %d/%d %s...\r'%(skipped, i, files, file_name)),
 
   def input_cells(self):
     # search cell folder and read lines of csv tracking files
@@ -127,8 +137,6 @@ class Frame(models.Model):
 
   # properties
   index = models.IntegerField(default=0)
-  previous_index = models.IntegerField(default=0)
-  next_index = models.IntegerField(default=0)
 
 ### Image
 class Image(models.Model):
@@ -136,6 +144,7 @@ class Image(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='images')
   series = models.ForeignKey(Series, related_name='images')
+  channel = models.ForeignKey(Channel, related_name='images')
   frame = models.ForeignKey(Frame, related_name='images')
 
   # properties
@@ -143,14 +152,13 @@ class Image(models.Model):
   input_path = models.CharField(default='input_path', max_length=255)
 
   # coordinates
-  channel = models.CharField(max_length=255)
   level = models.IntegerField(default=0)
 
   # image properties
-  max = models.FloatField(default=0.0)
-  min = models.FloatField(default=0.0)
+  max = models.IntegerField(default=0)
+  min = models.IntegerField(default=0)
   mean = models.FloatField(default=0.0)
-  sum = models.FloatField(default=0.0)
+  sum = models.IntegerField(default=0)
 
   # methods
   def load(self):
@@ -168,9 +176,12 @@ class Image(models.Model):
 
   def process(self):
     # load image
-
-    # store properties
-    pass
+    self.load()
+    self.max = self.array.max()
+    self.min = self.array.min()
+    self.mean = self.array.mean()
+    self.sum = self.array.sum()
+    self.save()
 
 ### ImageTemplate
 class ImageTemplate(models.Model):

@@ -52,6 +52,8 @@ class Command(BaseCommand):
       #create paths
       if not os.path.exists(os.path.join(base_path, experiment.name, str(s.index))):
         os.mkdir(os.path.join(base_path, experiment.name, str(s.index)))
+      if not os.path.exists(os.path.join(base_path, experiment.name, str(s.index), 'mod')):
+        os.mkdir(os.path.join(base_path, experiment.name, str(s.index), 'mod'))
       if not os.path.exists(os.path.join(base_path, experiment.name, str(s.index), 'ij')):
         os.mkdir(os.path.join(base_path, experiment.name, str(s.index), 'ij'))
       if not os.path.exists(os.path.join(base_path, experiment.name, str(s.index), 'ij', 'in')):

@@ -15,5 +15,10 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     # 1. for each experiment, fetch images
-    for experiment in Experiment.objects.all():
-      experiment.input_images()
+    if len(args)==0:
+      for experiment in Experiment.objects.all():
+        experiment.input_images()
+    else:
+      for arg in args:
+        experiment = Experiment.objects.get(name=arg)
+        experiment.input_images()
