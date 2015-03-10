@@ -148,6 +148,8 @@ class Series(models.Model):
           # parameters
           match = re.match(line_template.rx, line)
 
+          print([match.group('id'), match.group('frame'), match.group('row'), match.group('column')])
+
           cell_index = match.group('id')
           frame = self.frames.get(index=match.group('frame'))
           row = match.group('row')
