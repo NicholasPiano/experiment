@@ -144,6 +144,7 @@ class Series(models.Model):
       lines = track_file.readlines()
       for line in lines:
         # parameters
+        print(line_template.rx)
         match = re.match(line_template.rx, line)
 
         cell_index = match.group('id')
