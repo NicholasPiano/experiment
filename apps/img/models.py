@@ -134,6 +134,7 @@ class Series(models.Model):
     # delete current cells
     self.cells.all().delete()
     self.cell_instances.all().delete()
+    line_template = self.experiment.image_templates.get(name='track_line')
 
     # input path
     input_path = self.path(cell_path)
@@ -143,8 +144,7 @@ class Series(models.Model):
       lines = track_file.readlines()
       for line in lines:
         # parameters
-        line_template = self.experiment.image_templates.get(name='track_line')
-        match = re.match(line_template, line)
+        match = re.match(line_template.rx, line)
 
         cell_index = match.group('id')
         frame = self.frames.get(index=match.group('frame'))
