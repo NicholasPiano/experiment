@@ -89,6 +89,7 @@ class Experiment(models.Model):
         image, created = self.images.get_or_create(file_name=file_name, input_path=input_path, series=series, frame=frame, channel=channel, level=level)
 
         if created:
+          image.image_template = template
           image.process()
         else:
           skipped += 1
@@ -130,12 +131,31 @@ class Series(models.Model):
     return self.experiment.path(os.path.join(str(self.index), path))
 
   def input_cells(self):
+    # delete current cells
+    self.cells.all().delete()
+    self.cell_instances.all().delete()
+
+    # input path
     input_path = self.path(cell_path)
 
+    # open track file
     with open(os.path.join(input_path, 'tracks.xls')) as track_file:
       lines = track_file.readlines()
       for line in lines:
-        print(line)
+        # parameters
+        line_template = self.experiment.image_templates.get(name='track_line')
+        match = re.match(line_template, line)
+
+        cell_index = match.group('id')
+        frame = self.frames.get(index=match.group('frame'))
+        row = match.group('row')
+        column = match.group('column')
+
+        # make new cell if necessary
+        cell, cell_created = self.cells.get_or_create(experiment=self.experiment, index=cell_index)
+
+        # add cell instance for each line
+        cell_instance = cell.instances.create(experiment=self.experiment, series=self, frame=frame, row=int(row), column=int(column))
 
 ### Channel
 class Channel(models.Model):

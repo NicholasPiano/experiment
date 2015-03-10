@@ -65,4 +65,5 @@ series = [
 
 templates = [
   Template(name='input', rx=r'^[0-9]{6}_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<frame>.+)_z(?P<level>.+)\.tiff', reverse=r'_series%d_ch%d_t%d_z%d.tiff'),
+  Template(name='track_line', r'[0-9]+ (?P<id>[0-9]+) (?P<frame>[0-9]+) (?P<column>[0-9]+) (?P<row>[0-9]+) [-+]?[0-9]*\.?[0-9]+ [-+]?[0-9]*\.?[0-9]+ [0-9]+', reverse=r'')
 ]

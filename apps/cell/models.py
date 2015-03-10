@@ -18,13 +18,13 @@ class Cell(models.Model):
   barrier_enter_frame = models.IntegerField(default=-1)
 
   # methods
-  
+
 
 ### CellInstance
 class CellInstance(models.Model):
 
   # connections
-  region = models.ForeignKey(Region, related_name='cell_instances')
+  region = models.ForeignKey(Region, related_name='cell_instances', null=True)
   experiment = models.ForeignKey(Experiment, related_name='cell_instances')
   series = models.ForeignKey(Series, related_name='cell_instances')
   cell = models.ForeignKey(Cell, related_name='instances')
