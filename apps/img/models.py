@@ -150,16 +150,16 @@ class Series(models.Model):
 
           print([match.group('id'), match.group('frame'), match.group('row'), match.group('column')])
 
-          cell_index = match.group('id')
-          frame = self.frames.get(index=match.group('frame'))
-          row = match.group('row')
-          column = match.group('column')
+          cell_index = int(match.group('id'))-1
+          frame = self.frames.get(index=int(match.group('frame'))-1)
+          row = int(match.group('row'))
+          column = int(match.group('column'))
 
           # make new cell if necessary
           cell, cell_created = self.cells.get_or_create(experiment=self.experiment, index=cell_index)
 
           # add cell instance for each line
-          cell_instance = cell.instances.create(experiment=self.experiment, series=self, frame=frame, row=int(row), column=int(column))
+          cell_instance = cell.instances.create(experiment=self.experiment, series=self, frame=frame, row=row, column=column)
 
 ### Channel
 class Channel(models.Model):
