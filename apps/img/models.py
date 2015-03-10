@@ -32,6 +32,10 @@ class Region(models.Model):
   index = models.IntegerField(default=0)
   description = models.TextField(default='region description')
 
+  # methods
+  def __str__(self):
+    return '%d: %s'%(self.index, self.name)
+
 ### Experiment
 class Experiment(models.Model):
 
@@ -49,6 +53,9 @@ class Experiment(models.Model):
   tpf = models.FloatField(default=0.0) # time per frame
 
   # methods
+  def __str__(self):
+    return self.name
+
   def path(self, path):
     return os.path.join(base_path, self.name, path)
 
@@ -113,6 +120,9 @@ class Series(models.Model):
   levels = models.IntegerField(default=0)
 
   # methods
+  def __str__(self):
+    return '%s > %d'%(self.experiment.name, self.index)
+
   def process(self):
     # populate parameters from images
     image_set = self.experiment.images.all()
@@ -128,6 +138,10 @@ class Channel(models.Model):
   index = models.IntegerField(default=0)
   name = models.CharField(max_length=255)
 
+  # methods
+  def __str__(self):
+    return '%s > %d > %d:%s'%(self.experiment.name, self.series.index, self.index, self.name)
+
 ### Frame
 class Frame(models.Model):
 
@@ -137,6 +151,10 @@ class Frame(models.Model):
 
   # properties
   index = models.IntegerField(default=0)
+
+  # method
+  def __str__(self):
+    return '%s > %d > %d'%(self.experiment.name, self.series.index, self.index, self.name)
 
 ### Image
 class Image(models.Model):
@@ -161,6 +179,9 @@ class Image(models.Model):
   sum = models.IntegerField(default=0)
 
   # methods
+  def __str__(self):
+    return '%s > %d > ch%d,t%d > %s'%(self.experiment.name, self.series.index, self.channel.index, self.frame.index, self.file_name)
+
   def load(self):
     self.array = imread(os.path.join(self.input_path, self.file_name))
     return self.array
