@@ -143,20 +143,21 @@ class Series(models.Model):
     with open(os.path.join(input_path, 'tracks.xls')) as track_file:
       lines = track_file.readlines()
       for line in lines:
-        # parameters
-        print(line_template.rx)
-        match = re.match(line_template.rx, line)
+        if int('0' + line.split('\t')[0])>0:
+          line = ' '.join(line.rstrip().split('\t'))
+          # parameters
+          match = re.match(line_template.rx, line)
 
-        cell_index = match.group('id')
-        frame = self.frames.get(index=match.group('frame'))
-        row = match.group('row')
-        column = match.group('column')
+          cell_index = match.group('id')
+          frame = self.frames.get(index=match.group('frame'))
+          row = match.group('row')
+          column = match.group('column')
 
-        # make new cell if necessary
-        cell, cell_created = self.cells.get_or_create(experiment=self.experiment, index=cell_index)
+          # make new cell if necessary
+          cell, cell_created = self.cells.get_or_create(experiment=self.experiment, index=cell_index)
 
-        # add cell instance for each line
-        cell_instance = cell.instances.create(experiment=self.experiment, series=self, frame=frame, row=int(row), column=int(column))
+          # add cell instance for each line
+          cell_instance = cell.instances.create(experiment=self.experiment, series=self, frame=frame, row=int(row), column=int(column))
 
 ### Channel
 class Channel(models.Model):
