@@ -18,7 +18,7 @@ class Cell(models.Model):
   barrier_enter_frame = models.IntegerField(default=-1)
 
   # methods
-
+  
 
 ### CellInstance
 class CellInstance(models.Model):

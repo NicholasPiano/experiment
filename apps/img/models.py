@@ -21,7 +21,7 @@ image_channels = {
 
 base_path = settings.DATA_DIR
 img_path = 'img'
-cell_path = 'cells'
+cell_path = 'ij/out'
 plot_path = 'plots'
 
 ### Region
@@ -99,9 +99,8 @@ class Experiment(models.Model):
 
   def input_cells(self):
     # search cell folder and read lines of csv tracking files
-
-    #
-    pass
+    for series in self.series.all():
+      series.input_cells()
 
 ### Series
 class Series(models.Model):
@@ -126,6 +125,17 @@ class Series(models.Model):
   def process(self):
     # populate parameters from images
     image_set = self.experiment.images.all()
+
+  def path(self, path):
+    return self.experiment.path(os.path.join(str(self.index), path))
+
+  def input_cells(self):
+    input_path = self.path(cell_path)
+
+    with open(os.path.join(input_path, 'tracks.xls')) as track_file:
+      lines = track_file.readlines()
+      for line in lines:
+        print(line)
 
 ### Channel
 class Channel(models.Model):
