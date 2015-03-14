@@ -28,7 +28,6 @@ class Preprocess(models.Model):
     # make folders
 
 
-
     # get algorithm
     algorithm = getattr(algorithms, self.algorithm)
 

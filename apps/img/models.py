@@ -130,6 +130,9 @@ class Series(models.Model):
   def path(self, path):
     return self.experiment.path(os.path.join(str(self.index), path))
 
+  def shape(self):
+    return (self.rows, self.columns)
+
   def input_cells(self):
     # delete current cells
     self.cells.all().delete()
@@ -186,7 +189,8 @@ class Frame(models.Model):
 
   # method
   def __str__(self):
-    return '%s > %d > %d'%(self.experiment.name, self.series.index, self.index, self.name)
+    si = str(self.index)
+    return '0'*(len(str(self.series.max_frames)) - len(si)) + si
 
 ### Image
 class Image(models.Model):
